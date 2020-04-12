@@ -10,19 +10,26 @@ namespace MomenTFS
     {
         public MainForm()
         {
-            Title = "My Eto Form";
-            ClientSize = new Size(400, 350);
+            Title = "MomenTFS";
+            ClientSize = new Size(600, 480);
 
             var imageView = new ImageView();
-
-            Content = new StackLayout {
-                Padding = 10,
-                Items =
-                {
-                    imageView
-					// add more controls here
-				}
+            var scrollable = new Scrollable {
+                Content = imageView,
+                ExpandContentWidth = false,
+                ExpandContentHeight = false
             };
+
+            scrollable.Content = imageView;
+
+            var layout = new DynamicLayout();
+            layout.BeginVertical();
+            
+            layout.AddRow(new Label { Text = "Preview", HorizontalAlign = HorizontalAlign.Left });
+            layout.AddRow(scrollable);
+            layout.EndVertical();
+
+            Content = layout;
 
             // create a few commands that can be used for the menu and toolbar
             var clickMe = new Command { MenuText = "Click Me!", ToolBarText = "Click Me!" };
@@ -69,7 +76,8 @@ namespace MomenTFS
             openFileDialog.ShowDialog(control);
 
             if (!string.IsNullOrEmpty(openFileDialog.FileName)) {
-                imageView.Image = tfsReader.Read(openFileDialog.FileName);
+                tfsReader.Read(openFileDialog.FileName);
+                imageView.Image = tfsReader.RenderImage(0);
             }
         }
     }
