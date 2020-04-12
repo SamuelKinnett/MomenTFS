@@ -2,6 +2,7 @@ using System;
 using Eto.Forms;
 using Eto.Drawing;
 using MomenTFS.Reader;
+using System.Collections.Generic;
 
 namespace MomenTFS
 {
@@ -12,16 +13,13 @@ namespace MomenTFS
             Title = "My Eto Form";
             ClientSize = new Size(400, 350);
 
-            TFSReader tfsReader = new TFSReader();
-
             var imageView = new ImageView();
 
             Content = new StackLayout {
                 Padding = 10,
                 Items =
                 {
-                    imageView,
-                    "Hello World!",
+                    imageView
 					// add more controls here
 				}
             };
@@ -37,7 +35,7 @@ namespace MomenTFS
             aboutCommand.Executed += (sender, e) => new AboutDialog().ShowDialog(this);
 
             var loadTFS = new Command { MenuText = "Load TFS", ToolBarText = "Load TFS" };
-            loadTFS.Executed += (sender, e) => tfsReader.read(imageView);
+            loadTFS.Executed += (sender, e) => OpenTFS(this, imageView);
 
             // create menu
             Menu = new MenuBar {
@@ -59,6 +57,20 @@ namespace MomenTFS
 
             // create toolbar			
             ToolBar = new ToolBar { Items = { clickMe, loadTFS } };
+        }
+
+        private void OpenTFS(Control control, ImageView imageView) {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            FileFilter tfsFilter = new FileFilter("TFS", ".tfs", ".TFS");
+            TFSReader tfsReader = new TFSReader();
+
+            openFileDialog.MultiSelect = false;
+            openFileDialog.Filters.Add(tfsFilter);
+            openFileDialog.ShowDialog(control);
+
+            if (!string.IsNullOrEmpty(openFileDialog.FileName)) {
+                imageView.Image = tfsReader.Read(openFileDialog.FileName);
+            }
         }
     }
 }

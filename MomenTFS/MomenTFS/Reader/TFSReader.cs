@@ -27,7 +27,6 @@ namespace MomenTFS.Reader
         private Bitmap bitmap;
         private byte zoomValue = 10;
         private bool fastPaint = false;
-        private string filename = "";
 
         public TFSReader() {
             palInfo = new PaletteInfo();
@@ -58,7 +57,7 @@ namespace MomenTFS.Reader
             }
         }
 
-        public void read(ImageView imageView) {
+        public Bitmap Read(string filename) {
             Dictionary<int, Dictionary<int, Color>> bitmapData = new Dictionary<int, Dictionary<int, Color>>();
 
             using (var fileStream = new FileStream(filename, FileMode.Open)) {
@@ -184,7 +183,7 @@ namespace MomenTFS.Reader
 
             bitmap = new Bitmap(bitmapWidth, bitmapHeight, PixelFormat.Format32bppRgb, bitmapDataList);
 
-            imageView.Image = bitmap;
+            return bitmap;
         }
     }
 }
