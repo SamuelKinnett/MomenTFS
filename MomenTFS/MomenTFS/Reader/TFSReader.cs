@@ -25,7 +25,10 @@ namespace MomenTFS.Reader
         public TFSReader() {
             paletteInfo = new PaletteInfo();
             imageInfo = new ImageInfo();
-            bitmapData = new Dictionary<int, Dictionary<int, int>>();
+        }
+
+        public int GetPaletteCount() {
+            return paletteInfo.ClutNum;
         }
 
         // Converts a 15bpp color to an Eto color
@@ -70,6 +73,8 @@ namespace MomenTFS.Reader
         }
 
         public void Read(string filename) {
+            bitmapData = new Dictionary<int, Dictionary<int, int>>();
+
             using (var fileStream = new FileStream(filename, FileMode.Open)) {
                 header = new TFSHeader(fileStream);
 
