@@ -6,18 +6,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Resources;
 using System.IO;
+using DiscUtils.Iso9660;
+using DiscUtils;
+using MomenTFS.UI;
 
 namespace MomenTFS
 {
     public partial class MainForm : Form
     {
         private TFSReader tfsReader;
+        private List<TFSFile> files;
+        private Stream isoFileStream;
+        private CDReader cdReader;
         private ListBox fileList;
 
         public MainForm() {
             Title = "MomenTFS";
             ClientSize = new Size(600, 480);
             tfsReader = new TFSReader();
+            files = new List<TFSFile>();
 
             var paletteDropdown = new DropDown {
                 Visible = false,
@@ -77,18 +84,26 @@ namespace MomenTFS
             saveImage.Enabled = false;
             saveImage.Executed += (sender, e) => SaveImage(this, paletteDropdown);
 
-            var loadTFS = new Command { MenuText = "Load TFS", ToolBarText = "Load TFS" };
+            var loadTFS = new Command { MenuText = "Open TFS", ToolBarText = "Load TFS" };
             loadTFS.Executed += (sender, e) => OpenTFS(this);
+
+            var loadISO = new Command { MenuText = "Open ISO", ToolBarText = "Open ISO" };
+            var unloadISO = new Command { MenuText = "Unload ISO", ToolBarText = "Unload ISO", Enabled = false };
+
+            loadISO.Executed += (sender, e) => OpenISO(this, loadISO, unloadISO);
+            unloadISO.Executed += (sender, e) => CloseISO(this, loadISO, unloadISO);
 
             fileList.SelectedIndexChanged += (sender, e) => OpenSelectedTFS(saveImage, paletteDropdown, paletteDropdownLabel, imageView);
             fileList.KeyDown += (sender, e) => { if (e.Key == Keys.Delete || e.Key == Keys.Backspace) { RemoveTFS(); } };
+            fileList.DataStore = files;
+            fileList.ItemTextBinding = Binding.Property((TFSFile tfsFile) => Path.GetFileNameWithoutExtension(tfsFile.Filename));
 
             // create menu
             Menu = new MenuBar {
                 Items =
                 {
 					// File submenu
-					new ButtonMenuItem { Text = "&File", Items = { loadTFS, saveImage } }
+					new ButtonMenuItem { Text = "&File", Items = { loadTFS, loadISO, unloadISO, saveImage } }
 					// new ButtonMenuItem { Text = "&Edit", Items = { /* commands/items */ } },
 					// new ButtonMenuItem { Text = "&View", Items = { /* commands/items */ } },
 				},
@@ -115,16 +130,70 @@ namespace MomenTFS
 
             foreach (var filename in openFileDialog.Filenames) {
                 if (!string.IsNullOrEmpty(filename)
-                        && !fileList.Items.Any(i => i.Key == filename)) {
-                    ListItem newListItem = new ListItem();
-                    newListItem.Key = filename;
-                    newListItem.Text = Path.GetFileNameWithoutExtension(filename);
-
-                    fileList.Items.Add(newListItem);
+                        && !files.Any(i => i.Filename == filename)) {
+                    var newFile = new TFSFile(filename);
+                    files.Add(newFile);
                 }
             }
 
-            fileList.SelectedKey = fileList.Items.Last().Key;
+            fileList.DataStore = files;
+            fileList.UpdateBindings();
+        }
+
+        private void OpenISO(Control control, Command loadISO, Command closeISO) {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            FileFilter isoFilter = new FileFilter("ISO", ".iso", ".ISO");
+
+            openFileDialog.MultiSelect = false;
+            openFileDialog.Filters.Add(isoFilter);
+            openFileDialog.ShowDialog(control);
+
+            string filename = openFileDialog.FileName;
+
+            if (!string.IsNullOrEmpty(filename)) {
+                isoFileStream = File.Open(filename, FileMode.Open);
+                cdReader = new CDReader(isoFileStream, true);
+                loadISO.Enabled = false;
+                closeISO.Enabled = true;
+                var tfsFiles = ScanDiscDirectory(cdReader.Root);
+                foreach (string tfsFilename in tfsFiles) {
+                    files.Add(new TFSFile(tfsFilename, filename));
+                }
+            }
+
+            fileList.DataStore = files;
+            fileList.UpdateBindings();
+        }
+
+        private void CloseISO(Control control, Command loadISO, Command closeISO) {
+            cdReader.Dispose();
+            isoFileStream.Dispose();
+
+            files.RemoveAll((file) => file.DiscFile != null);
+            fileList.DataStore = files;
+            fileList.UpdateBindings();
+
+            closeISO.Enabled = false;
+            loadISO.Enabled = true;
+        }
+
+        private List<String> ScanDiscDirectory(DiscDirectoryInfo directory) {
+            List<String> tfsFiles = new List<string>();
+
+            var files = directory.GetFiles();
+            var subDirectories = directory.GetDirectories();
+
+            foreach (var file in files) {
+                if (file.Extension.ToLower() == "tfs;1") {
+                    tfsFiles.Add(file.FullName);
+                }
+            }
+
+            foreach (var subDirectory in subDirectories) {
+                tfsFiles.AddRange(ScanDiscDirectory(subDirectory));
+            }
+
+            return tfsFiles;
         }
 
         private void OpenSelectedTFS(Command saveImage, DropDown paletteDropdown, Label paletteDropdownLabel, ImageView imageView) {
@@ -138,7 +207,15 @@ namespace MomenTFS
             paletteDropdown.Items.Clear();
             paletteDropdownLabel.Visible = false;
             saveImage.Enabled = false;
-            tfsReader.Read(fileList.SelectedKey.ToString());
+
+            TFSFile selectedItem = files[fileList.SelectedIndex];
+            if (selectedItem.DiscFile == null) {
+                tfsReader.Read(selectedItem.Filename);
+            } else {
+                using (Stream fileStream = cdReader.OpenFile(selectedItem.Filename, FileMode.Open)) {
+                    tfsReader.Read(fileStream);
+                }
+            }
             imageView.Image = tfsReader.RenderImage(0);
 
             if (tfsReader.PaletteCount > 1) {
@@ -155,12 +232,15 @@ namespace MomenTFS
         }
 
         private void RemoveTFS() {
-            int currentIndex = fileList.SelectedIndex;
-            fileList.Items.Remove((IListItem)fileList.SelectedValue);
-            if (currentIndex < fileList.Items.Count) {
-                fileList.SelectedIndex = currentIndex;
-            } else if (currentIndex > 0) {
-                fileList.SelectedIndex = currentIndex - 1;
+            if (fileList.SelectedIndex > -1) {
+                int currentIndex = fileList.SelectedIndex;
+                files.RemoveAt(currentIndex);
+                fileList.DataStore = files;
+                if (currentIndex < files.Count) {
+                    fileList.SelectedIndex = currentIndex;
+                } else if (currentIndex > 0) {
+                    fileList.SelectedIndex = currentIndex - 1;
+                }
             }
         }
 
