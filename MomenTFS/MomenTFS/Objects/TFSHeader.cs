@@ -16,14 +16,14 @@ namespace MomenTFS.Objects
         public byte RP { get; set; }
         public ushort Resl { get; set; }
 
-        public TFSHeader(FileStream fileStream) {
-            Width = (byte)fileStream.ReadByte();
-            RW = (byte)fileStream.ReadByte();
-            Height = (byte)fileStream.ReadByte();
-            RH = (byte)fileStream.ReadByte();
-            PaletteCount = (byte)fileStream.ReadByte();
-            RP = (byte)fileStream.ReadByte();
-            Resl = fileStream.ReadShort();
+        public TFSHeader(Stream stream) {
+            Width = (byte)stream.ReadByte();
+            RW = (byte)stream.ReadByte();
+            Height = (byte)stream.ReadByte();
+            RH = (byte)stream.ReadByte();
+            PaletteCount = (byte)stream.ReadByte();
+            RP = (byte)stream.ReadByte();
+            Resl = stream.ReadShort();
         }
     }
 }
