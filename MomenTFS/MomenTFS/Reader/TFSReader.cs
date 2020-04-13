@@ -53,8 +53,8 @@ namespace MomenTFS.Reader
                 throw new Exception("Can't render image until Read() has been called");
             }
 
-            int bitmapWidth = bitmapData.Keys.Max();
-            int bitmapHeight = bitmapData[0].Keys.Max();
+            int bitmapWidth = bitmapData.Keys.Max() + 1;
+            int bitmapHeight = bitmapData[0].Keys.Max() + 1;
 
             List<Color> bitmapDataList = new List<Color>();
             for (var y = 0; y < bitmapHeight; ++y) {
