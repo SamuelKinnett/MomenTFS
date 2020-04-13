@@ -5,12 +5,12 @@ using System.Text;
 
 namespace MomenTFS.Extensions
 {
-    public static class FileStreamExtensions
+    public static class StreamExtensions
     {
-        public static ushort ReadShort(this FileStream fileStream) {
+        public static ushort ReadShort(this Stream stream) {
             byte[] bytes = new byte[2];
-            bytes[0] = (byte)fileStream.ReadByte();
-            bytes[1] = (byte)fileStream.ReadByte();
+            bytes[0] = (byte)stream.ReadByte();
+            bytes[1] = (byte)stream.ReadByte();
 
             return BitConverter.ToUInt16(bytes, 0);
         }
