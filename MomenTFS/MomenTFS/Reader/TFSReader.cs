@@ -59,52 +59,62 @@ namespace MomenTFS.Reader
             List<Color> bitmapDataList = new List<Color>();
             for (var y = 0; y < bitmapHeight; ++y) {
                 for (var x = 0; x < bitmapWidth; ++x) {
-                    int colorNumber = bitmapData[x][y];
-                    bitmapDataList.Add(colorLookupTable[paletteIndex, colorNumber]);
+                    if (bitmapData.ContainsKey(x) && bitmapData[x].ContainsKey(y)) {
+                        int colorNumber = bitmapData[x][y];
+                        bitmapDataList.Add(colorLookupTable[paletteIndex, colorNumber]);
+                    } else {
+                        //bitmapDataList.Add(colorLookupTable[paletteIndex, 0]);
+                        bitmapDataList.Add(new Color(0, 0, 0));
+                    }
                 }
             }
 
             return new Bitmap(bitmapWidth, bitmapHeight, PixelFormat.Format32bppRgb, bitmapDataList);
         }
 
+
         public void Read(string filename) {
+            using (var fileStream = new FileStream(filename, FileMode.Open)) {
+                Read(fileStream);
+            }
+        }
+
+        public void Read(Stream stream) {
             bitmapData = new Dictionary<int, Dictionary<int, int>>();
 
-            using (var fileStream = new FileStream(filename, FileMode.Open)) {
-                header = new TFSHeader(fileStream);
+            header = new TFSHeader(stream);
 
-                paletteInfo.ClutColors = 256;
-                paletteInfo.ClutNum = header.PaletteCount;
+            paletteInfo.ClutColors = 256;
+            paletteInfo.ClutNum = header.PaletteCount;
 
-                var colorLookupTableData = new List<ushort>();
+            var colorLookupTableData = new List<ushort>();
 
-                for (var i = 0; i < paletteInfo.ClutColors * paletteInfo.ClutNum; ++i) {
-                    var currentColorWord = fileStream.ReadShort();
-                    colorLookupTableData.Add(currentColorWord);
+            for (var i = 0; i < paletteInfo.ClutColors * paletteInfo.ClutNum; ++i) {
+                var currentColorWord = stream.ReadShort();
+                colorLookupTableData.Add(currentColorWord);
+            }
+
+            populateColourLookupTable(colorLookupTableData);
+
+            for (var tileIndex = 0; tileIndex < (header.Width * header.Height); ++tileIndex) {
+                var tileData = new List<byte>();
+                int tileX = stream.ReadShort() * 2;
+                int tileY = stream.ReadShort();
+
+                for (var i = 0; i < (TILE_WIDTH * TILE_HEIGHT); ++i) {
+                    tileData.Add((byte)stream.ReadByte());
                 }
 
-                populateColourLookupTable(colorLookupTableData);
+                var tileDataIndex = 0;
 
-                for (var tileIndex = 0; tileIndex < (header.Width * header.Height); ++tileIndex) {
-                    var tileData = new List<byte>();
-                    int tileX = fileStream.ReadShort() * 2;
-                    int tileY = fileStream.ReadShort();
-
-                    for (var i = 0; i < (TILE_WIDTH * TILE_HEIGHT); ++i) {
-                        tileData.Add((byte)fileStream.ReadByte());
-                    }
-
-                    var tileDataIndex = 0;
-
-                    for (var y = 0; y < TILE_HEIGHT; ++y) {
-                        for (var x = 0; x < TILE_WIDTH; ++x) {
-                            if (!bitmapData.ContainsKey(x + tileX)) {
-                                bitmapData[x + tileX] = new Dictionary<int, int>();
-                            }
-
-                            bitmapData[x + tileX][y + tileY] = tileData[tileDataIndex];
-                            ++tileDataIndex;
+                for (var y = 0; y < TILE_HEIGHT; ++y) {
+                    for (var x = 0; x < TILE_WIDTH; ++x) {
+                        if (!bitmapData.ContainsKey(x + tileX)) {
+                            bitmapData[x + tileX] = new Dictionary<int, int>();
                         }
+
+                        bitmapData[x + tileX][y + tileY] = tileData[tileDataIndex];
+                        ++tileDataIndex;
                     }
                 }
             }

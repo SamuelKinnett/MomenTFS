@@ -5,12 +5,14 @@ using MomenTFS.Reader;
 using System.Collections.Generic;
 using System.Linq;
 using System.Resources;
+using System.IO;
 
 namespace MomenTFS
 {
     public partial class MainForm : Form
     {
-        TFSReader tfsReader;
+        private TFSReader tfsReader;
+        private ListBox fileList;
 
         public MainForm() {
             Title = "MomenTFS";
@@ -32,6 +34,10 @@ namespace MomenTFS
                 ExpandContentHeight = false
             };
 
+            fileList = new ListBox() {
+                Width = 200
+            };
+
             var aboutDialog = new AboutDialog() {
                 Developers = new string[1] { "Samuel Kinnett" },
                 Version = "",
@@ -39,15 +45,24 @@ namespace MomenTFS
             };
 
             scrollable.Content = imageView;
-            paletteDropdown.SelectedValueChanged += (sender, e) => RenderTFS(paletteDropdown, imageView);
+            paletteDropdown.SelectedIndexChanged += (sender, e) => RenderTFS(paletteDropdown, imageView);
+
+
+            var toolbar = new DynamicLayout();
+            toolbar.AddRow(new Label { Text = "Preview" }, null, paletteDropdownLabel, paletteDropdown);
 
             var layout = new DynamicLayout();
             layout.BeginVertical();
-            layout.AddRow(new Label { Text = "Preview" }, null, paletteDropdownLabel, paletteDropdown);
-            layout.EndVertical();
-
+            layout.BeginHorizontal();
             layout.BeginVertical();
+            layout.AddRow(new Label { Text = "Files" });
+            layout.AddRow(fileList);
+            layout.EndVertical();
+            layout.BeginVertical();
+            layout.AddRow(toolbar);
             layout.AddRow(scrollable);
+            layout.EndVertical();
+            layout.EndHorizontal();
             layout.EndVertical();
 
             Content = layout;
@@ -63,7 +78,10 @@ namespace MomenTFS
             saveImage.Executed += (sender, e) => SaveImage(this, paletteDropdown);
 
             var loadTFS = new Command { MenuText = "Load TFS", ToolBarText = "Load TFS" };
-            loadTFS.Executed += (sender, e) => OpenTFS(this, imageView, paletteDropdown, paletteDropdownLabel, saveImage);
+            loadTFS.Executed += (sender, e) => OpenTFS(this);
+
+            fileList.SelectedIndexChanged += (sender, e) => OpenSelectedTFS(saveImage, paletteDropdown, paletteDropdownLabel, imageView);
+            fileList.KeyDown += (sender, e) => { if (e.Key == Keys.Delete || e.Key == Keys.Backspace) { RemoveTFS(); } };
 
             // create menu
             Menu = new MenuBar {
@@ -87,33 +105,62 @@ namespace MomenTFS
             // ToolBar = new ToolBar { Items = { clickMe, loadTFS } };
         }
 
-        private void OpenTFS(Control control, ImageView imageView, DropDown paletteDropdown, Label paletteDropdownLabel, Command saveImage) {
+        private void OpenTFS(Control control) {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             FileFilter tfsFilter = new FileFilter("TFS", ".tfs", ".TFS");
 
-            openFileDialog.MultiSelect = false;
+            openFileDialog.MultiSelect = true;
             openFileDialog.Filters.Add(tfsFilter);
             openFileDialog.ShowDialog(control);
 
-            if (!string.IsNullOrEmpty(openFileDialog.FileName)) {
-                paletteDropdown.Visible = false;
-                paletteDropdown.Items.Clear();
-                paletteDropdownLabel.Visible = false;
-                saveImage.Enabled = false;
-                tfsReader.Read(openFileDialog.FileName);
-                imageView.Image = tfsReader.RenderImage(0);
+            foreach (var filename in openFileDialog.Filenames) {
+                if (!string.IsNullOrEmpty(filename)
+                        && !fileList.Items.Any(i => i.Key == filename)) {
+                    ListItem newListItem = new ListItem();
+                    newListItem.Key = filename;
+                    newListItem.Text = Path.GetFileNameWithoutExtension(filename);
 
-                if (tfsReader.PaletteCount > 1) {
-                    List<String> options = Enumerable.Range(0, tfsReader.PaletteCount).Select(i => i.ToString()).ToList();
-                    foreach (String option in options) {
-                        paletteDropdown.Items.Add(option);
-                    }
-                    paletteDropdown.SelectedKey = "0";
-                    paletteDropdown.Visible = true;
-                    paletteDropdownLabel.Visible = true;
+                    fileList.Items.Add(newListItem);
                 }
+            }
 
-                saveImage.Enabled = true;
+            fileList.SelectedKey = fileList.Items.Last().Key;
+        }
+
+        private void OpenSelectedTFS(Command saveImage, DropDown paletteDropdown, Label paletteDropdownLabel, ImageView imageView) {
+            if (fileList.SelectedKey == null) {
+                imageView.Image = null;
+                return;
+            }
+
+            saveImage.Enabled = false;
+            paletteDropdown.Visible = false;
+            paletteDropdown.Items.Clear();
+            paletteDropdownLabel.Visible = false;
+            saveImage.Enabled = false;
+            tfsReader.Read(fileList.SelectedKey.ToString());
+            imageView.Image = tfsReader.RenderImage(0);
+
+            if (tfsReader.PaletteCount > 1) {
+                List<String> options = Enumerable.Range(0, tfsReader.PaletteCount).Select(i => i.ToString()).ToList();
+                foreach (String option in options) {
+                    paletteDropdown.Items.Add(option);
+                }
+                paletteDropdown.SelectedKey = "0";
+                paletteDropdown.Visible = true;
+                paletteDropdownLabel.Visible = true;
+            }
+
+            saveImage.Enabled = true;
+        }
+
+        private void RemoveTFS() {
+            int currentIndex = fileList.SelectedIndex;
+            fileList.Items.Remove((IListItem)fileList.SelectedValue);
+            if (currentIndex < fileList.Items.Count) {
+                fileList.SelectedIndex = currentIndex;
+            } else if (currentIndex > 0) {
+                fileList.SelectedIndex = currentIndex - 1;
             }
         }
 
