@@ -12,7 +12,7 @@ namespace MomenTFS.Objects
         public byte RW { get; set; }
         public byte Height { get; set; }
         public byte RH { get; set; }
-        public byte PalNum { get; set; }
+        public byte PaletteCount { get; set; }
         public byte RP { get; set; }
         public ushort Resl { get; set; }
 
@@ -21,7 +21,7 @@ namespace MomenTFS.Objects
             RW = (byte)fileStream.ReadByte();
             Height = (byte)fileStream.ReadByte();
             RH = (byte)fileStream.ReadByte();
-            PalNum = (byte)fileStream.ReadByte();
+            PaletteCount = (byte)fileStream.ReadByte();
             RP = (byte)fileStream.ReadByte();
             Resl = fileStream.ReadShort();
         }
