@@ -109,19 +109,22 @@ namespace MomenTFS
             OpenFileDialog openFileDialog = new OpenFileDialog();
             FileFilter tfsFilter = new FileFilter("TFS", ".tfs", ".TFS");
 
-            openFileDialog.MultiSelect = false;
+            openFileDialog.MultiSelect = true;
             openFileDialog.Filters.Add(tfsFilter);
             openFileDialog.ShowDialog(control);
 
-            if (!string.IsNullOrEmpty(openFileDialog.FileName)
-                && !fileList.Items.Any(i => i.Key == openFileDialog.FileName)) {
-                ListItem newListItem = new ListItem();
-                newListItem.Key = openFileDialog.FileName;
-                newListItem.Text = Path.GetFileNameWithoutExtension(openFileDialog.FileName);
+            foreach (var filename in openFileDialog.Filenames) {
+                if (!string.IsNullOrEmpty(filename)
+                        && !fileList.Items.Any(i => i.Key == filename)) {
+                    ListItem newListItem = new ListItem();
+                    newListItem.Key = filename;
+                    newListItem.Text = Path.GetFileNameWithoutExtension(filename);
 
-                fileList.Items.Add(newListItem);
-                fileList.SelectedKey = openFileDialog.FileName;
+                    fileList.Items.Add(newListItem);
+                }
             }
+
+            fileList.SelectedKey = fileList.Items.Last().Key;
         }
 
         private void OpenSelectedTFS(Command saveImage, DropDown paletteDropdown, Label paletteDropdownLabel, ImageView imageView) {
@@ -152,7 +155,13 @@ namespace MomenTFS
         }
 
         private void RemoveTFS() {
-            fileList.Items.Remove((IListItem) fileList.SelectedValue);
+            int currentIndex = fileList.SelectedIndex;
+            fileList.Items.Remove((IListItem)fileList.SelectedValue);
+            if (currentIndex < fileList.Items.Count) {
+                fileList.SelectedIndex = currentIndex;
+            } else if (currentIndex > 0) {
+                fileList.SelectedIndex = currentIndex - 1;
+            }
         }
 
         private void SaveImage(Control control, DropDown paletteDropdown) {
