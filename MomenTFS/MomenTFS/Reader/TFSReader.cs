@@ -31,6 +31,10 @@ namespace MomenTFS.Reader
             return paletteInfo.ClutNum;
         }
 
+        public bool GetLoaded() {
+            return imageLoaded;
+        }
+
         // Converts a 15bpp color to an Eto color
         protected Color ShortToColor(ushort bytes) {
             var red = (bytes & 0x1F) * 8;
