@@ -18,13 +18,11 @@ namespace MomenTFS.Reader
 
         private TFSHeader header;
         private PaletteInfo paletteInfo;
-        private ImageInfo imageInfo;
         private Color[,] colorLookupTable;
         private Dictionary<int, Dictionary<int, int>> bitmapData;
 
         public TFSReader() {
             paletteInfo = new PaletteInfo();
-            imageInfo = new ImageInfo();
             ImageLoaded = false;
         }
 
@@ -88,9 +86,9 @@ namespace MomenTFS.Reader
                 populateColourLookupTable(colorLookupTableData);
 
                 for (var tileIndex = 0; tileIndex < (header.Width * header.Height); ++tileIndex) {
-                    var tileData = new List<ushort>();
-                    imageInfo.ImageX = fileStream.ReadShort() * 2;
-                    imageInfo.ImageY = fileStream.ReadShort();
+                    var tileData = new List<byte>();
+                    int tileX = fileStream.ReadShort() * 2;
+                    int tileY = fileStream.ReadShort();
 
                     for (var i = 0; i < (TILE_WIDTH * TILE_HEIGHT); ++i) {
                         tileData.Add((byte)fileStream.ReadByte());
@@ -100,11 +98,11 @@ namespace MomenTFS.Reader
 
                     for (var y = 0; y < TILE_HEIGHT; ++y) {
                         for (var x = 0; x < TILE_WIDTH; ++x) {
-                            if (!bitmapData.ContainsKey(x + imageInfo.ImageX)) {
-                                bitmapData[x + imageInfo.ImageX] = new Dictionary<int, int>();
+                            if (!bitmapData.ContainsKey(x + tileX)) {
+                                bitmapData[x + tileX] = new Dictionary<int, int>();
                             }
 
-                            bitmapData[x + imageInfo.ImageX][y + imageInfo.ImageY] = tileData[tileDataIndex];
+                            bitmapData[x + tileX][y + tileY] = tileData[tileDataIndex];
                             ++tileDataIndex;
                         }
                     }
