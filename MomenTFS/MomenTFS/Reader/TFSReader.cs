@@ -1,12 +1,10 @@
 ﻿using Eto.Drawing;
-using Eto.Forms;
 using MomenTFS.Extensions;
 using MomenTFS.Objects;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace MomenTFS.Reader
 {
@@ -15,24 +13,19 @@ namespace MomenTFS.Reader
         private const int TILE_WIDTH = 128;
         private const int TILE_HEIGHT = 128;
 
+        public int PaletteCount { get => paletteInfo.ClutNum; }
+        public bool ImageLoaded { get; private set; }
+
         private TFSHeader header;
         private PaletteInfo paletteInfo;
         private ImageInfo imageInfo;
         private Color[,] colorLookupTable;
-        private Boolean imageLoaded = false;
         private Dictionary<int, Dictionary<int, int>> bitmapData;
 
         public TFSReader() {
             paletteInfo = new PaletteInfo();
             imageInfo = new ImageInfo();
-        }
-
-        public int GetPaletteCount() {
-            return paletteInfo.ClutNum;
-        }
-
-        public bool GetLoaded() {
-            return imageLoaded;
+            ImageLoaded = false;
         }
 
         // Converts a 15bpp color to an Eto color
@@ -58,7 +51,7 @@ namespace MomenTFS.Reader
         }
 
         public Bitmap RenderImage(int paletteIndex) {
-            if (!imageLoaded) {
+            if (!ImageLoaded) {
                 throw new Exception("Can't render image until Read() has been called");
             }
 
@@ -85,17 +78,14 @@ namespace MomenTFS.Reader
                 paletteInfo.ClutColors = 256;
                 paletteInfo.ClutNum = header.PaletteCount;
 
-                var colourLookupTableData = new List<ushort>();
+                var colorLookupTableData = new List<ushort>();
 
                 for (var i = 0; i < paletteInfo.ClutColors * paletteInfo.ClutNum; ++i) {
                     var currentColorWord = fileStream.ReadShort();
-                    colourLookupTableData.Add(currentColorWord);
+                    colorLookupTableData.Add(currentColorWord);
                 }
 
-                populateColourLookupTable(colourLookupTableData);
-
-                var row = 0;
-                var column = 0;
+                populateColourLookupTable(colorLookupTableData);
 
                 for (var tileIndex = 0; tileIndex < (header.Width * header.Height); ++tileIndex) {
                     var tileData = new List<ushort>();
@@ -108,74 +98,20 @@ namespace MomenTFS.Reader
 
                     var tileDataIndex = 0;
 
-                    if (tileIndex == 0) {
-                        if (imageInfo.ImageX == 0 && imageInfo.ImageY == 0) {
-                            for (var y = 0; y < TILE_HEIGHT; ++y) {
-                                for (var x = 0; x < TILE_WIDTH; ++x) {
-                                    if (!bitmapData.ContainsKey(x)) {
-                                        bitmapData[x] = new Dictionary<int, int>();
-                                    }
-
-                                    bitmapData[x][y] = tileData[tileDataIndex];
-                                    ++tileDataIndex;
-                                }
-                            }
-                        } else if (imageInfo.ImageX > 0 || imageInfo.ImageY > 0) {
-                            for (var y = 0; y < TILE_HEIGHT; ++y) {
-                                for (var x = 0; x < TILE_WIDTH; ++x) {
-                                    if (!bitmapData.ContainsKey(x + imageInfo.ImageX)) {
-                                        bitmapData[x + imageInfo.ImageX] = new Dictionary<int, int>();
-                                    }
-
-                                    bitmapData[x + imageInfo.ImageX][y + imageInfo.ImageY] = tileData[tileDataIndex];
-                                    ++tileDataIndex;
-                                }
-                            }
-                        }
-                        row = (int)Math.Truncate(bitmapData.Keys.Max() / (double)TILE_WIDTH);
-                    } else {
-                        if (imageInfo.ImageX == 0 && imageInfo.ImageY == 0) {
-                            if (row == header.Width || row + 1 == header.Width) {
-                                row = 0;
-                                ++column;
-                            } else {
-                                ++row;
+                    for (var y = 0; y < TILE_HEIGHT; ++y) {
+                        for (var x = 0; x < TILE_WIDTH; ++x) {
+                            if (!bitmapData.ContainsKey(x + imageInfo.ImageX)) {
+                                bitmapData[x + imageInfo.ImageX] = new Dictionary<int, int>();
                             }
 
-                            for (var y = 0; y < TILE_HEIGHT; ++y) {
-                                for (var x = 0; x < TILE_WIDTH; ++x) {
-                                    if (!bitmapData.ContainsKey(x + row * TILE_WIDTH)) {
-                                        bitmapData[x + row * TILE_WIDTH] = new Dictionary<int, int>();
-                                    }
-
-                                    bitmapData[x + row * TILE_WIDTH][y + column * TILE_HEIGHT] = tileData[tileDataIndex];
-                                    ++tileDataIndex;
-                                }
-                            }
-
-                            if (row < header.Width) {
-                                ++row;
-                                if (column != 0) {
-                                    --row;
-                                }
-                            }
-                        } else if (imageInfo.ImageX > 0 || imageInfo.ImageY > 0) {
-                            for (var y = 0; y < TILE_HEIGHT; ++y) {
-                                for (var x = 0; x < TILE_WIDTH; ++x) {
-                                    if (!bitmapData.ContainsKey(x + imageInfo.ImageX)) {
-                                        bitmapData[x + imageInfo.ImageX] = new Dictionary<int, int>();
-                                    }
-
-                                    bitmapData[x + imageInfo.ImageX][y + imageInfo.ImageY] = tileData[tileDataIndex];
-                                    ++tileDataIndex;
-                                }
-                            }
+                            bitmapData[x + imageInfo.ImageX][y + imageInfo.ImageY] = tileData[tileDataIndex];
+                            ++tileDataIndex;
                         }
                     }
                 }
             }
 
-            imageLoaded = true;
+            ImageLoaded = true;
         }
     }
 }

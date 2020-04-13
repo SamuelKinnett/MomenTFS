@@ -103,8 +103,8 @@ namespace MomenTFS
                 tfsReader.Read(openFileDialog.FileName);
                 imageView.Image = tfsReader.RenderImage(0);
 
-                if (tfsReader.GetPaletteCount() > 1) {
-                    List<String> options = Enumerable.Range(0, tfsReader.GetPaletteCount()).Select(i => i.ToString()).ToList();
+                if (tfsReader.PaletteCount > 1) {
+                    List<String> options = Enumerable.Range(0, tfsReader.PaletteCount).Select(i => i.ToString()).ToList();
                     foreach (String option in options) {
                         paletteDropdown.Items.Add(option);
                     }
@@ -119,11 +119,11 @@ namespace MomenTFS
 
         private void SaveImage(Control control, DropDown paletteDropdown) {
             SaveFileDialog saveFileDialog = new SaveFileDialog();
-            FileFilter saveFilter = new FileFilter("BMP", ".bmp");
 
             saveFileDialog.Filters.Add(new FileFilter("BMP", ".bmp"));
             saveFileDialog.Filters.Add(new FileFilter("JPEG", ".jpeg"));
             saveFileDialog.Filters.Add(new FileFilter("PNG", ".png"));
+            saveFileDialog.CurrentFilterIndex = 0;
             saveFileDialog.ShowDialog(control);
 
             if (!string.IsNullOrEmpty(saveFileDialog.FileName)) {
