@@ -57,14 +57,14 @@ namespace MomenTFS.Reader
             int bitmapHeight = bitmapData[0].Keys.Max() + 1;
 
             List<Color> bitmapDataList = new List<Color>();
+            Color fallbackColor = new Color(0, 0, 0);
             for (var y = 0; y < bitmapHeight; ++y) {
                 for (var x = 0; x < bitmapWidth; ++x) {
                     if (bitmapData.ContainsKey(x) && bitmapData[x].ContainsKey(y)) {
                         int colorNumber = bitmapData[x][y];
                         bitmapDataList.Add(colorLookupTable[paletteIndex, colorNumber]);
                     } else {
-                        //bitmapDataList.Add(colorLookupTable[paletteIndex, 0]);
-                        bitmapDataList.Add(new Color(0, 0, 0));
+                        bitmapDataList.Add(fallbackColor);
                     }
                 }
             }
