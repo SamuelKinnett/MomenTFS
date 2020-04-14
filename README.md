@@ -2,6 +2,10 @@
 
 A C#/Eto application for viewing and exporting Digimon World .TFS map files.
 
+## Screenshots
+![Screenshot1](https://github.com/SamuelKinnett/MomenTFS/blob/master/Assets/Screenshots/Screenshot1.png?raw=true)  
+![Screenshot2](https://github.com/SamuelKinnett/MomenTFS/blob/master/Assets/Screenshots/Screenshot2.png?raw=true)
+
 ## Features
 - View TFS files and switch between palettes
 - Export images in the following formats:
