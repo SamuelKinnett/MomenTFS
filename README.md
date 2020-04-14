@@ -1,4 +1,4 @@
-# momen-tfs
+# MomenTFS
 
 A C#/Eto application for viewing and exporting Digimon World .TFS map files.
 
