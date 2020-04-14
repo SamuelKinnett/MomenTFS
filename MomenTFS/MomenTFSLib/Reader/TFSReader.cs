@@ -14,6 +14,11 @@ namespace MomenTFS.Reader
         private const int TILE_WIDTH = 128;
         private const int TILE_HEIGHT = 128;
 
+        // Maximum values had to be added in due to one map file (MAYO10.TFS) having a tile 
+        // with an X co-ordinate of 131,070
+        private const int MAX_WIDTH = 4096;
+        private const int MAX_HEIGHT = 4096;
+
         public int PaletteCount { get => paletteInfo.ClutNum; }
         public bool ImageLoaded { get; private set; }
 
@@ -124,6 +129,14 @@ namespace MomenTFS.Reader
                 var tileData = new List<byte>();
                 int tileX = stream.ReadShort() * 2;
                 int tileY = stream.ReadShort();
+
+                if (tileX + TILE_WIDTH > MAX_WIDTH) {
+                    tileX = MAX_WIDTH - TILE_WIDTH;
+                }
+
+                if (tileY + TILE_HEIGHT > MAX_HEIGHT) {
+                    tileY = MAX_HEIGHT - TILE_HEIGHT;
+                }
 
                 for (var i = 0; i < (TILE_WIDTH * TILE_HEIGHT); ++i) {
                     tileData.Add((byte)stream.ReadByte());
