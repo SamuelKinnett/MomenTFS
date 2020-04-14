@@ -1,10 +1,10 @@
-﻿using MomenTFS.Forms.Extensions;
+﻿using MomenTFS.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace MomenTFS.Forms.Objects
+namespace MomenTFS.Objects
 {
     public class TFSHeader
     {

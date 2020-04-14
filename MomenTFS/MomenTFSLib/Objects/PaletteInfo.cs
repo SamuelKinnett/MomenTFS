@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MomenTFS.Forms.Objects
+namespace MomenTFS.Objects
 {
     public class PaletteInfo
     {

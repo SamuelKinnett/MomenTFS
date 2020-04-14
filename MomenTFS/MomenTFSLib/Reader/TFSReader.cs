@@ -1,12 +1,13 @@
-﻿using Eto.Drawing;
-using MomenTFS.Forms.Extensions;
-using MomenTFS.Forms.Objects;
+﻿using MomenTFS.Extensions;
+using MomenTFS.Objects;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 
-namespace MomenTFS.Forms.Reader
+namespace MomenTFS.Reader
 {
     public class TFSReader
     {
@@ -28,10 +29,10 @@ namespace MomenTFS.Forms.Reader
 
         // Converts a 15bpp color to an Eto color
         protected Color ShortToColor(ushort bytes) {
-            var red = bytes & 0x1F;
-            var green = (bytes >> 5) & 0x1F;
-            var blue = (bytes >> 10) & 0x1F;
-            return new Color(red / 32f, green / 32f, blue / 32f);
+            var red = (bytes & 0x1F) * 8;
+            var green = ((bytes >> 5) & 0x1F) * 8;
+            var blue = ((bytes >> 10) & 0x1F) * 8;
+            return Color.FromArgb(red, green, blue);
         }
 
         protected void populateColourLookupTable(List<ushort> colourLookupTableData) {
@@ -56,20 +57,43 @@ namespace MomenTFS.Forms.Reader
             int bitmapWidth = bitmapData.Keys.Max() + 1;
             int bitmapHeight = bitmapData[0].Keys.Max() + 1;
 
-            List<Color> bitmapDataList = new List<Color>();
-            Color fallbackColor = new Color(0, 0, 0);
-            for (var y = 0; y < bitmapHeight; ++y) {
-                for (var x = 0; x < bitmapWidth; ++x) {
-                    if (bitmapData.ContainsKey(x) && bitmapData[x].ContainsKey(y)) {
-                        int colorNumber = bitmapData[x][y];
-                        bitmapDataList.Add(colorLookupTable[paletteIndex, colorNumber]);
-                    } else {
-                        bitmapDataList.Add(fallbackColor);
+            Color fallbackColor = Color.FromArgb(0, 0, 0);
+            Bitmap renderedBitmap
+                = new Bitmap(bitmapWidth, bitmapHeight, PixelFormat.Format32bppRgb);
+
+            try {
+                var renderedBitmapData = renderedBitmap.LockBits(
+                    new Rectangle(0, 0, bitmapWidth, bitmapHeight),
+                    ImageLockMode.ReadWrite,
+                    PixelFormat.Format32bppRgb);
+                var stride = renderedBitmapData.Stride;
+
+                unsafe {
+                    byte* bitmapPointer = (byte*)renderedBitmapData.Scan0;
+
+                    for (var y = 0; y < bitmapHeight; ++y) {
+                        for (var x = 0; x < bitmapWidth; ++x) {
+                            Color pixelColor = fallbackColor;
+
+                            if (bitmapData.ContainsKey(x) && bitmapData[x].ContainsKey(y)) {
+                                int colorNumber = bitmapData[x][y];
+                                pixelColor = colorLookupTable[paletteIndex, colorNumber];
+                            }
+
+                            bitmapPointer[(x * 4) + (y * stride)] = pixelColor.B;
+                            bitmapPointer[(x * 4) + (y * stride) + 1] = pixelColor.G;
+                            bitmapPointer[(x * 4) + (y * stride) + 2] = pixelColor.R;
+                            bitmapPointer[(x * 4) + (y * stride) + 3] = 0x00;
+                        }
                     }
                 }
+
+                renderedBitmap.UnlockBits(renderedBitmapData);
+            } catch (Exception ex) {
+
             }
 
-            return new Bitmap(bitmapWidth, bitmapHeight, PixelFormat.Format32bppRgb, bitmapDataList);
+            return renderedBitmap;
         }
 
 

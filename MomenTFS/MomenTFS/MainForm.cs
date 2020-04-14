@@ -9,6 +9,7 @@ using System.IO;
 using DiscUtils.Iso9660;
 using DiscUtils;
 using MomenTFS.UI;
+using MomenTFS.Forms.Extensions;
 
 namespace MomenTFS
 {
@@ -196,7 +197,12 @@ namespace MomenTFS
             return tfsFiles;
         }
 
-        private void OpenSelectedTFS(Command saveImage, DropDown paletteDropdown, Label paletteDropdownLabel, ImageView imageView) {
+        private void OpenSelectedTFS(
+                Command saveImage,
+                DropDown paletteDropdown,
+                Label paletteDropdownLabel,
+                ImageView imageView) {
+
             if (fileList.SelectedKey == null) {
                 imageView.Image = null;
                 return;
@@ -212,17 +218,26 @@ namespace MomenTFS
             if (selectedItem.DiscFile == null) {
                 tfsReader.Read(selectedItem.Filename);
             } else {
-                using (Stream fileStream = cdReader.OpenFile(selectedItem.Filename, FileMode.Open)) {
+                using (Stream fileStream
+                        = cdReader.OpenFile(selectedItem.Filename, FileMode.Open)) {
                     tfsReader.Read(fileStream);
                 }
             }
-            imageView.Image = tfsReader.RenderImage(0);
+
+            using (var systemBitmap = tfsReader.RenderImage(0)) {
+                imageView.Image = systemBitmap.ToEtoBitmap();
+            }
 
             if (tfsReader.PaletteCount > 1) {
-                List<String> options = Enumerable.Range(0, tfsReader.PaletteCount).Select(i => i.ToString()).ToList();
-                foreach (String option in options) {
+                List<string> options = Enumerable
+                    .Range(0, tfsReader.PaletteCount)
+                    .Select(i => i.ToString())
+                    .ToList();
+
+                foreach (var option in options) {
                     paletteDropdown.Items.Add(option);
                 }
+
                 paletteDropdown.SelectedKey = "0";
                 paletteDropdown.Visible = true;
                 paletteDropdownLabel.Visible = true;
@@ -254,7 +269,11 @@ namespace MomenTFS
             saveFileDialog.ShowDialog(control);
 
             if (!string.IsNullOrEmpty(saveFileDialog.FileName)) {
-                Bitmap bitmapToSave = tfsReader.RenderImage(int.Parse((string)paletteDropdown.SelectedKey));
+                Bitmap bitmapToSave;
+                using (var systemBitmap
+                        = tfsReader.RenderImage(int.Parse(paletteDropdown.SelectedKey))) {
+                    bitmapToSave = systemBitmap.ToEtoBitmap();
+                }
                 switch (saveFileDialog.CurrentFilter.Name) {
                     case "BMP":
                         bitmapToSave.Save(saveFileDialog.FileName, ImageFormat.Bitmap);
@@ -271,7 +290,10 @@ namespace MomenTFS
 
         private void RenderTFS(DropDown paletteDropdown, ImageView imageView) {
             if (paletteDropdown.Visible) {
-                imageView.Image = tfsReader.RenderImage(int.Parse((string)paletteDropdown.SelectedKey));
+                using (var systemBitmap
+                        = tfsReader.RenderImage(int.Parse((string)paletteDropdown.SelectedKey))) {
+                    imageView.Image = systemBitmap.ToEtoBitmap();
+                }
             }
         }
     }

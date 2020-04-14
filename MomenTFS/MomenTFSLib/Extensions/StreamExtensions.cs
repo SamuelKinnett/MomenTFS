@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace MomenTFS.Forms.Extensions
+namespace MomenTFS.Extensions
 {
     public static class StreamExtensions
     {
