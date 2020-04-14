@@ -1,6 +1,6 @@
 # MomenTFS
 
-A C#/Eto application for viewing and exporting Digimon World [.TFS map files](https://github.com/SamuelKinnett/MomenTFS/wiki/TFS-Files).
+A C#/Eto application for viewing and exporting Digimon World [TFS map files](https://github.com/SamuelKinnett/MomenTFS/wiki/TFS-Files).
 
 ## Screenshots
 ![Screenshot1](https://github.com/SamuelKinnett/MomenTFS/blob/master/Assets/Screenshots/Screenshot1.png?raw=true)  
