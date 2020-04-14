@@ -10,7 +10,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\MomenTFSLib\MomenTFS.csproj" />
+    <ProjectReference Include="..\MomenTFS\MomenTFS.csproj" />
   </ItemGroup>
   
 </Project>
