@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
-    <AssemblyName>MomenTFS</AssemblyName>
+    <AssemblyName>MomenTFS.Wpf</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
