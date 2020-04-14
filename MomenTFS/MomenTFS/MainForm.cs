@@ -4,14 +4,13 @@ using Eto.Drawing;
 using MomenTFS.Reader;
 using System.Collections.Generic;
 using System.Linq;
-using System.Resources;
 using System.IO;
 using DiscUtils.Iso9660;
 using DiscUtils;
 using MomenTFS.UI;
 using MomenTFS.Forms.Extensions;
 
-namespace MomenTFS
+namespace MomenTFS.Forms
 {
     public partial class MainForm : Form
     {
@@ -48,16 +47,23 @@ namespace MomenTFS
 
             var aboutDialog = new AboutDialog() {
                 Developers = new string[1] { "Samuel Kinnett" },
+                ProgramName = "MomenTFS",
                 Version = "",
                 ProgramDescription = "A TFS viewer based on and inspired by TFSViewer by Lab 313",
+                License = License.LicenseString
             };
 
             scrollable.Content = imageView;
-            paletteDropdown.SelectedIndexChanged += (sender, e) => RenderTFS(paletteDropdown, imageView);
+            paletteDropdown.SelectedIndexChanged
+                += (sender, e) => RenderTFS(paletteDropdown, imageView);
 
 
             var toolbar = new DynamicLayout();
-            toolbar.AddRow(new Label { Text = "Preview" }, null, paletteDropdownLabel, paletteDropdown);
+            toolbar.AddRow(
+                new Label { Text = "Preview" },
+                null,
+                paletteDropdownLabel,
+                paletteDropdown);
 
             var layout = new DynamicLayout();
             layout.BeginVertical();
@@ -75,7 +81,9 @@ namespace MomenTFS
 
             Content = layout;
 
-            var quitCommand = new Command { MenuText = "Quit", Shortcut = Application.Instance.CommonModifier | Keys.Q };
+            var quitCommand = new Command {
+                MenuText = "Quit",
+                Shortcut = Application.Instance.CommonModifier | Keys.Q };
             quitCommand.Executed += (sender, e) => Application.Instance.Quit();
 
             var aboutCommand = new Command { MenuText = "About..." };
@@ -89,29 +97,40 @@ namespace MomenTFS
             loadTFS.Executed += (sender, e) => OpenTFS(this);
 
             var loadISO = new Command { MenuText = "Open ISO", ToolBarText = "Open ISO" };
-            var unloadISO = new Command { MenuText = "Unload ISO", ToolBarText = "Unload ISO", Enabled = false };
+            var unloadISO = new Command {
+                MenuText = "Unload ISO",
+                ToolBarText = "Unload ISO",
+                Enabled = false };
 
             loadISO.Executed += (sender, e) => OpenISO(this, loadISO, unloadISO);
-            unloadISO.Executed += (sender, e) => CloseISO(this, loadISO, unloadISO);
+            unloadISO.Executed += (sender, e) => CloseISO(loadISO, unloadISO);
 
-            fileList.SelectedIndexChanged += (sender, e) => OpenSelectedTFS(saveImage, paletteDropdown, paletteDropdownLabel, imageView);
-            fileList.KeyDown += (sender, e) => { if (e.Key == Keys.Delete || e.Key == Keys.Backspace) { RemoveTFS(); } };
+            fileList.SelectedIndexChanged += (sender, e) => OpenSelectedTFS(
+                saveImage, paletteDropdown, paletteDropdownLabel, imageView);
+            fileList.KeyDown += (sender, e) => { 
+                if (e.Key == Keys.Delete || e.Key == Keys.Backspace) { RemoveTFS(); } 
+            };
+
             fileList.DataStore = files;
-            fileList.ItemTextBinding = Binding.Property((TFSFile tfsFile) => Path.GetFileNameWithoutExtension(tfsFile.Filename));
+            fileList.ItemTextBinding = Binding.Property(
+                (TFSFile tfsFile) => Path.GetFileNameWithoutExtension(tfsFile.Filename));
 
             // create menu
             Menu = new MenuBar {
                 Items =
                 {
 					// File submenu
-					new ButtonMenuItem { Text = "&File", Items = { loadTFS, loadISO, unloadISO, saveImage } }
+					new ButtonMenuItem {
+                        Text = "&File",
+                        Items = { loadTFS, loadISO, unloadISO, saveImage }
+                    }
 					// new ButtonMenuItem { Text = "&Edit", Items = { /* commands/items */ } },
 					// new ButtonMenuItem { Text = "&View", Items = { /* commands/items */ } },
 				},
                 ApplicationItems =
                 {
 					// application (OS X) or file menu (others)
-					new ButtonMenuItem { Text = "&Preferences..." },
+					// new ButtonMenuItem { Text = "&Preferences..." },
                 },
                 QuitItem = quitCommand,
                 AboutItem = aboutCommand
@@ -166,7 +185,7 @@ namespace MomenTFS
             fileList.UpdateBindings();
         }
 
-        private void CloseISO(Control control, Command loadISO, Command closeISO) {
+        private void CloseISO(Command loadISO, Command closeISO) {
             cdReader.Dispose();
             isoFileStream.Dispose();
 
@@ -291,7 +310,7 @@ namespace MomenTFS
         private void RenderTFS(DropDown paletteDropdown, ImageView imageView) {
             if (paletteDropdown.Visible) {
                 using (var systemBitmap
-                        = tfsReader.RenderImage(int.Parse((string)paletteDropdown.SelectedKey))) {
+                        = tfsReader.RenderImage(int.Parse(paletteDropdown.SelectedKey))) {
                     imageView.Image = systemBitmap.ToEtoBitmap();
                 }
             }
