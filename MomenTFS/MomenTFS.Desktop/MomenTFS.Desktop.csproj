@@ -4,6 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFrameworks>net461</TargetFrameworks>
     <AssemblyName>MomenTFS</AssemblyName>
+    <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
   
   <ItemGroup>
