@@ -3,10 +3,12 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFrameworks>net461</TargetFrameworks>
+    <AssemblyName>MomenTFS</AssemblyName>
+    <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\MomenTFS\MomenTFS.csproj" />
+    <ProjectReference Include="..\MomenTFS\MomenTFS.Forms.csproj" />
   </ItemGroup>
 	
   <ItemGroup>
