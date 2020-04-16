@@ -119,7 +119,7 @@ namespace MomenTFS.Reader
             var colorLookupTableData = new List<ushort>();
 
             for (var i = 0; i < paletteInfo.ClutColors * paletteInfo.ClutNum; ++i) {
-                var currentColorWord = stream.ReadShort();
+                var currentColorWord = stream.ReadUShort();
                 colorLookupTableData.Add(currentColorWord);
             }
 
@@ -127,8 +127,8 @@ namespace MomenTFS.Reader
 
             for (var tileIndex = 0; tileIndex < (header.Width * header.Height); ++tileIndex) {
                 var tileData = new List<byte>();
-                int tileX = stream.ReadShort() * 2;
-                int tileY = stream.ReadShort();
+                int tileX = stream.ReadUShort() * 2;
+                int tileY = stream.ReadUShort();
 
                 if (tileX + TILE_WIDTH > MAX_WIDTH) {
                     tileX = MAX_WIDTH - TILE_WIDTH;

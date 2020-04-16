@@ -9,12 +9,14 @@ using DiscUtils.Iso9660;
 using DiscUtils;
 using MomenTFS.UI;
 using MomenTFS.Forms.Extensions;
+using MomenTFS.MAP;
 
 namespace MomenTFS.Forms
 {
     public partial class MainForm : Form
     {
         private TFSReader tfsReader;
+        private MAPReader mapReader;
         private List<TFSFile> files;
         private Stream isoFileStream;
         private CDReader cdReader;
@@ -24,6 +26,7 @@ namespace MomenTFS.Forms
             Title = "MomenTFS";
             ClientSize = new Size(600, 480);
             tfsReader = new TFSReader();
+            mapReader = new MAPReader();
             files = new List<TFSFile>();
 
             var paletteDropdown = new DropDown {
@@ -152,6 +155,14 @@ namespace MomenTFS.Forms
                 if (!string.IsNullOrEmpty(filename)
                         && !files.Any(i => i.Filename == filename)) {
                     var newFile = new TFSFile(filename);
+                    var directoryPath = Path.GetDirectoryName(filename);
+                    var newMAPFile = Path.Combine(
+                        directoryPath, $"{Path.GetFileNameWithoutExtension(filename)}.MAP");
+
+                    if (File.Exists(newMAPFile)) {
+                        newFile.MAPFilename = newMAPFile;
+                    }
+
                     files.Add(newFile);
                 }
             }
@@ -240,6 +251,17 @@ namespace MomenTFS.Forms
                 using (Stream fileStream
                         = cdReader.OpenFile(selectedItem.Filename, FileMode.Open)) {
                     tfsReader.Read(fileStream);
+                }
+            }
+
+            if (selectedItem.MAPFilename != null) {
+                if (selectedItem.DiscFile == null) {
+                    mapReader.Read(selectedItem.Filename);
+                } else {
+                    using (Stream fileStream
+                            = cdReader.OpenFile(selectedItem.Filename, FileMode.Open)) {
+                        mapReader.Read(fileStream);
+                    }
                 }
             }
 

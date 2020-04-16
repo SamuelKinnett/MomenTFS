@@ -23,7 +23,7 @@ namespace MomenTFS.Objects
             RH = (byte)stream.ReadByte();
             PaletteCount = (byte)stream.ReadByte();
             RP = (byte)stream.ReadByte();
-            Resl = stream.ReadShort();
+            Resl = stream.ReadUShort();
         }
     }
 }
