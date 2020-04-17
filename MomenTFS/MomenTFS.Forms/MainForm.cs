@@ -256,10 +256,10 @@ namespace MomenTFS.Forms
 
             if (selectedItem.MAPFilename != null) {
                 if (selectedItem.DiscFile == null) {
-                    mapReader.Read(selectedItem.Filename);
+                    mapReader.Read(selectedItem.MAPFilename);
                 } else {
                     using (Stream fileStream
-                            = cdReader.OpenFile(selectedItem.Filename, FileMode.Open)) {
+                            = cdReader.OpenFile(selectedItem.MAPFilename, FileMode.Open)) {
                         mapReader.Read(fileStream);
                     }
                 }

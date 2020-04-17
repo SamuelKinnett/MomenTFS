@@ -1,4 +1,5 @@
 ﻿using MomenTFS.Extensions;
+using MomenTFS.MAP.Enums;
 using MomenTFS.MAP.Objects;
 using System;
 using System.Collections.Generic;
@@ -9,48 +10,55 @@ namespace MomenTFS.MAP.Sections
 {
     public class MAPSettings
     {
-        public Vector3 CameraOrigin { get; private set; }
-        public Vector3 CameraTranslation { get; private set; }
+        public IntVector3 CameraOrigin { get; private set; }
+        public IntVector3 CameraTranslation { get; private set; }
         public List<Light> Lights { get; private set; }
         public ushort Zoom { get; private set; }
         public ushort SpriteScale { get; private set; }
-        public ushort[] AreaLikeTypes { get; private set; }
-        public ushort[] AreaDislikeTypes { get; private set; }
-        public ushort MapTileWidth { get; private set; }
-        public ushort MapTileHeight { get; private set; }
+        public int[] AreaLikeTypes { get; private set; }
+        public int[] AreaDislikeTypes { get; private set; }
+        public int MapTileWidth { get; private set; }
+        public int MapTileHeight { get; private set; }
         public int[,] MapTiles { get; private set; }
 
         public MAPSettings(Stream stream) {
-            CameraOrigin = stream.ReadVector3();
-            CameraTranslation = stream.ReadVector3();
+            CameraOrigin = stream.ReadIntVector3();
+            CameraTranslation = stream.ReadIntVector3();
 
             Lights = new List<Light>();
             for (int i = 0; i < 3; ++i) {
-                var lightPosition = stream.ReadVector3();
-                var lightColor = stream.ReadVector3();
+                var lightPosition = stream.ReadIntVector3();
+                var lightColor = stream.ReadIntVector3();
 
                 Lights.Add(new Light(lightPosition, lightColor));
             }
 
-            stream.Seek(24, SeekOrigin.Current);
+            stream.Seek(12, SeekOrigin.Current);
 
             Zoom = stream.ReadUShort();
             SpriteScale = stream.ReadUShort();
 
-            AreaLikeTypes = new ushort[4];
-            AreaLikeTypes[0] = stream.ReadUShort();
-            AreaLikeTypes[1] = stream.ReadUShort();
-            AreaLikeTypes[2] = stream.ReadUShort();
-            AreaLikeTypes[3] = stream.ReadUShort();
+            AreaLikeTypes = new int[4];
+            AreaLikeTypes[0] = stream.ReadInt();
+            AreaLikeTypes[1] = stream.ReadInt();
+            AreaLikeTypes[2] = stream.ReadInt();
+            AreaLikeTypes[3] = stream.ReadInt();
 
-            AreaDislikeTypes = new ushort[4];
-            AreaDislikeTypes[0] = stream.ReadUShort();
-            AreaDislikeTypes[1] = stream.ReadUShort();
-            AreaDislikeTypes[2] = stream.ReadUShort();
-            AreaDislikeTypes[3] = stream.ReadUShort();
+            AreaDislikeTypes = new int[4];
+            AreaDislikeTypes[0] = stream.ReadInt();
+            AreaDislikeTypes[1] = stream.ReadInt();
+            AreaDislikeTypes[2] = stream.ReadInt();
+            AreaDislikeTypes[3] = stream.ReadInt();
 
-            MapTileWidth = stream.ReadUShort();
-            MapTileHeight = stream.ReadUShort();
+            MapTileWidth = stream.ReadInt();
+            MapTileHeight = stream.ReadInt();
+            MapTiles = new int[MapTileWidth, MapTileHeight];
+
+            for (int y = 0; y < MapTileHeight; ++y) {
+                for (int x = 0; x < MapTileWidth; ++x) {
+                    MapTiles[x, y] = stream.ReadInt();
+                }
+            }
         }
     }
 }

@@ -6,10 +6,10 @@ namespace MomenTFS.MAP.Objects
 {
     public class Light
     {
-        public Vector3 Position;
-        public Vector3 Color;
+        public IntVector3 Position;
+        public IntVector3 Color;
 
-        public Light(Vector3 position, Vector3 color) {
+        public Light(IntVector3 position, IntVector3 color) {
             Position = position;
             Color = color;
         }

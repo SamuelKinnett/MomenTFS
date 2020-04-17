@@ -19,9 +19,16 @@ namespace MomenTFS.MAP
             MAPData mapData = new MAPData();
 
             byte firstAddress = (byte)stream.ReadByte();
+            int sectionCount = firstAddress / 4;
+
             stream.Seek(firstAddress, SeekOrigin.Begin);
 
             mapData.Settings = new MAPSettings(stream);
+
+            List<TIMImage> timImages = new List<TIMImage>();
+            for (int i = 1; i < sectionCount - 3; ++i) {
+                timImages.Add(new TIMImage(stream));
+            }
 
             return mapData;
         }

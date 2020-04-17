@@ -8,5 +8,6 @@ namespace MomenTFS.MAP.Objects
     public class MAPData
     {
         public MAPSettings Settings { get; set; }
+        public List<TIMImage> TIMImages { get; set; }
     }
 }
