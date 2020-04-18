@@ -1,9 +1,10 @@
-﻿using MomenTFS.MAP.Sections;
+﻿using MomenTFS.MAP.Settings;
+using MomenTFS.MAP.TIM;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MomenTFS.MAP.Objects
+namespace MomenTFS.MAP
 {
     public class MAPData
     {

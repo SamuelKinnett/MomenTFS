@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace MomenTFS.MAP.Sections
+namespace MomenTFS.MAP.Settings
 {
     public class MAPSettings
     {

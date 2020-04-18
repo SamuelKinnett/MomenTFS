@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MomenTFS.MAP.Objects
+namespace MomenTFS.MAP.TIM
 {
     public class CLUTColor
     {
