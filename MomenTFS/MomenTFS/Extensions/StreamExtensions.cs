@@ -1,9 +1,7 @@
 ﻿using MomenTFS.MAP.Enums;
-using MomenTFS.MAP.Objects;
+using MomenTFS.Objects;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace MomenTFS.Extensions
 {
@@ -23,7 +21,7 @@ namespace MomenTFS.Extensions
             return BitConverter.ToInt32(bytes, 0);
         }
 
-        public static ShortVector3 ReadShortVector3(
+        public static ShortVector3 ReadShortVector3( 
                 this Stream stream, Endian endianness = Endian.BIG) {
             return new ShortVector3(
                 stream.ReadShort(endianness),
