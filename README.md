@@ -23,7 +23,7 @@ A C#/Eto application for viewing and exporting Digimon World [TFS map files](htt
 If you're only interested in using the core library, you only need to worry about building the MomenTFS project. Otherwise, build whichever project corresponds to your target platform (i.e. if you want to build for windows then build the .wpf project). As far as I'm aware there shouldn't be anything you need to directly install but if I'm wrong please correct me!
 
 ## Credits
-MomenTFS was based on code originally written by Lab 313 for their Delphi program TFSViewer. Without the hard work put in by them to reverse engineer the file format this would've been much more of a headache.
+MomenTFS was based on code originally written by Lab 313 for their Delphi program TFSViewer.
 
 Huge thanks also go to Romsstar and SydMontague for their amazing efforts in reverse engineering the MAP and TFS files. It's only thanks to them that the MAP reading is possible!
 
