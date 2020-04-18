@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using MomenTFS.Objects;
 
-namespace MomenTFS.MAP.Objects
+namespace MomenTFS.MAP.Settings
 {
     public class Light
     {

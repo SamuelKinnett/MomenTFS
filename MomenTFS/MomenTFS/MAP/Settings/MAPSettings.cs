@@ -1,10 +1,7 @@
 ﻿using MomenTFS.Extensions;
-using MomenTFS.MAP.Enums;
-using MomenTFS.MAP.Objects;
-using System;
+using MomenTFS.Objects;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace MomenTFS.MAP.Settings
 {
