@@ -7,8 +7,8 @@ namespace MomenTFS.MAP.Settings
 {
     public class MAPSettings
     {
-        public IntVector3 CameraOrigin { get; private set; }
-        public IntVector3 CameraTranslation { get; private set; }
+        public IVector3 CameraOrigin { get; private set; }
+        public IVector3 CameraTranslation { get; private set; }
         public List<Light> Lights { get; private set; }
         public ushort Zoom { get; private set; }
         public ushort SpriteScale { get; private set; }
@@ -19,13 +19,13 @@ namespace MomenTFS.MAP.Settings
         public int[,] MapTiles { get; private set; }
 
         public MAPSettings(Stream stream) {
-            CameraOrigin = stream.ReadIntVector3();
-            CameraTranslation = stream.ReadIntVector3();
+            CameraOrigin = stream.ReadIVector3();
+            CameraTranslation = stream.ReadIVector3();
 
             Lights = new List<Light>();
             for (int i = 0; i < 3; ++i) {
-                var lightPosition = stream.ReadIntVector3();
-                var lightColor = stream.ReadIntVector3();
+                var lightPosition = stream.ReadIVector3();
+                var lightColor = stream.ReadIVector3();
 
                 Lights.Add(new Light(lightPosition, lightColor));
             }

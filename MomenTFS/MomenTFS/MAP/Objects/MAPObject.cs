@@ -17,13 +17,11 @@ namespace MomenTFS.MAP.Objects
             Width = stream.ReadUShort();
             Height = stream.ReadUShort();
 
-            stream.ReadUShort();
+            stream.Seek(2, SeekOrigin.Current);
 
             Z = stream.ReadUShort();
 
-            for (int i = 0; i < 3; ++i) {
-                stream.ReadUShort();
-            }
+            stream.Seek(6, SeekOrigin.Current);
         }
     }
 }

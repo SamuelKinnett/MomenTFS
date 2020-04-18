@@ -4,10 +4,10 @@ namespace MomenTFS.MAP.Settings
 {
     public class Light
     {
-        public IntVector3 Position;
-        public IntVector3 Color;
+        public IVector3 Position;
+        public IVector3 Color;
 
-        public Light(IntVector3 position, IntVector3 color) {
+        public Light(IVector3 position, IVector3 color) {
             Position = position;
             Color = color;
         }

@@ -1,4 +1,5 @@
-﻿using MomenTFS.MAP.Objects;
+﻿using MomenTFS.MAP.Elements;
+using MomenTFS.MAP.Objects;
 using MomenTFS.MAP.Settings;
 using MomenTFS.MAP.TIM;
 using System.Collections.Generic;
@@ -28,9 +29,10 @@ namespace MomenTFS.MAP
             for (int i = 1; i < sectionCount - 3; ++i) {
                 timImages.Add(new TIMImage(stream));
             }
-            mapData.TIMImages = timImages;
 
+            mapData.TIMImages = timImages;
             mapData.Objects = new MAPObjects(stream);
+            mapData.Elements = new MAPElements(stream);
 
             return mapData;
         }

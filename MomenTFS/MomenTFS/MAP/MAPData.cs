@@ -1,4 +1,5 @@
-﻿using MomenTFS.MAP.Objects;
+﻿using MomenTFS.MAP.Elements;
+using MomenTFS.MAP.Objects;
 using MomenTFS.MAP.Settings;
 using MomenTFS.MAP.TIM;
 using System;
@@ -12,5 +13,6 @@ namespace MomenTFS.MAP
         public MAPSettings Settings { get; set; }
         public List<TIMImage> TIMImages { get; set; }
         public MAPObjects Objects { get; set; }
+        public MAPElements Elements { get; set; }
     }
 }

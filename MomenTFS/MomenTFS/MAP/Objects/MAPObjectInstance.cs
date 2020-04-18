@@ -25,7 +25,7 @@ namespace MomenTFS.MAP.Objects
             X = stream.ReadUShort();
             Y = stream.ReadUShort();
 
-            stream.ReadUShort();
+            stream.Seek(2, SeekOrigin.Current);
         }
     }
 }

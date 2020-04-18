@@ -21,17 +21,17 @@ namespace MomenTFS.Extensions
             return BitConverter.ToInt32(bytes, 0);
         }
 
-        public static ShortVector3 ReadShortVector3( 
+        public static SVector3 ReadSVector3( 
                 this Stream stream, Endian endianness = Endian.BIG) {
-            return new ShortVector3(
+            return new SVector3(
                 stream.ReadShort(endianness),
                 stream.ReadShort(endianness),
                 stream.ReadShort(endianness));
         }
 
-        public static IntVector3 ReadIntVector3(
+        public static IVector3 ReadIVector3(
                 this Stream stream, Endian endianness = Endian.BIG) {
-            return new IntVector3(
+            return new IVector3(
                 stream.ReadInt(endianness),
                 stream.ReadInt(endianness),
                 stream.ReadInt(endianness));
