@@ -3,6 +3,8 @@ using MomenTFS.MAP.Enums;
 using MomenTFS.MAP.TIM.DataEntry;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
 
@@ -48,13 +50,16 @@ namespace MomenTFS.MAP.TIM
                 clut.Width = stream.ReadUShort();
                 clut.Height = stream.ReadUShort();
 
-                CLUTColor[,] palette = new CLUTColor[clut.Width, clut.Height];
+                CLUTColor[,] lookupTable = new CLUTColor[clut.Width, clut.Height];
 
                 for (int y = 0; y < clut.Height; ++y) {
                     for (int x = 0; x < clut.Width; ++x) {
-                        palette[x, y] = new CLUTColor(stream.ReadUShort());
+                        lookupTable[x, y] = new CLUTColor(stream.ReadUShort());
                     }
                 }
+
+                clut.LookupTable = lookupTable;
+                ColourLookupTable = clut;
             }
 
             ImageLength = stream.ReadInt();
@@ -100,6 +105,64 @@ namespace MomenTFS.MAP.TIM
                     ImageData[x, y] = currentRow[x];
                 }
             }
+        }
+
+        public Bitmap ToBitmap(int paletteIndex) {
+            int bitmapWidth = ImageWidth;
+            int bitmapHeight = ImageHeight;
+
+            switch (BitsPerPixel) {
+                case BitsPerPixel.FOUR:
+                    bitmapWidth = ImageWidth * 4;
+                    break;
+                case BitsPerPixel.EIGHT:
+                    bitmapWidth = ImageWidth * 2;
+                    break;
+                case BitsPerPixel.TWENTY_FOUR:
+                    bitmapWidth = (int)Math.Ceiling(ImageWidth / 3f);
+                    break;
+            }
+
+            Bitmap renderedBitmap
+                = new Bitmap(bitmapWidth, bitmapHeight, PixelFormat.Format32bppRgb);
+
+            try {
+                var renderedBitmapData = renderedBitmap.LockBits(
+                    new Rectangle(0, 0, bitmapWidth, bitmapHeight),
+                    ImageLockMode.ReadWrite,
+                    PixelFormat.Format32bppRgb);
+                var stride = renderedBitmapData.Stride;
+
+                unsafe {
+                    byte* bitmapPointer = (byte*)renderedBitmapData.Scan0;
+
+                    for (var y = 0; y < bitmapHeight; ++y) {
+                        for (var x = 0; x < bitmapWidth; ++x) {
+                            Color pixelColor;
+                            ImageDataEntry currentDataEntry = ImageData[x, y];
+
+                            if (currentDataEntry is IndexedColourDataEntry) {
+                                pixelColor = ColourLookupTable.LookupTable
+                                    [((IndexedColourDataEntry)currentDataEntry).CLUTIndex, 0]
+                                    .GetAsSystemColor();
+                            } else if (currentDataEntry is RealColourDataEntry) {
+                                pixelColor = ((RealColourDataEntry)currentDataEntry).Color;
+                            }
+
+                            bitmapPointer[(x * 4) + (y * stride)] = pixelColor.B;
+                            bitmapPointer[(x * 4) + (y * stride) + 1] = pixelColor.G;
+                            bitmapPointer[(x * 4) + (y * stride) + 2] = pixelColor.R;
+                            bitmapPointer[(x * 4) + (y * stride) + 3] = pixelColor.A;
+                        }
+                    }
+                }
+
+                renderedBitmap.UnlockBits(renderedBitmapData);
+            } catch (Exception ex) {
+
+            }
+
+            return renderedBitmap;
         }
     }
 }

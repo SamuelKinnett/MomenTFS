@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 
 namespace MomenTFS.MAP.TIM
@@ -44,6 +45,20 @@ namespace MomenTFS.MAP.TIM
                     : 0;
 
             return rgba;
+        }
+
+        public Color GetAsSystemColor() {
+            return Color.FromArgb(
+                Red == 0 && Green == 0 && Blue == 0
+                    ? SpecialTransparencyProcessing
+                        ? 0
+                        : 255
+                    : SpecialTransparencyProcessing
+                        ? 255
+                        : 0,
+                Red * 8,
+                Green * 8,
+                Blue * 8);
         }
     }
 }

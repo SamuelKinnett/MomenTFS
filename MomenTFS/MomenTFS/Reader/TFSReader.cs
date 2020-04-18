@@ -21,6 +21,13 @@ namespace MomenTFS.Reader
 
         public int PaletteCount { get => paletteInfo.ClutNum; }
         public bool ImageLoaded { get; private set; }
+        public IVector3 ImageSize { get {
+                int bitmapWidth = bitmapData.Keys.Max() + 1;
+                int bitmapHeight = bitmapData[0].Keys.Max() + 1;
+
+                return new IVector3(bitmapWidth, bitmapHeight, 0);
+            }
+        }
 
         private TFSHeader header;
         private PaletteInfo paletteInfo;

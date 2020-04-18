@@ -9,7 +9,7 @@ namespace MomenTFS.MAP.Settings
     {
         public IVector3 CameraOrigin { get; private set; }
         public IVector3 CameraTranslation { get; private set; }
-        public List<Light> Lights { get; private set; }
+        public Light[] Lights { get; private set; }
         public ushort Zoom { get; private set; }
         public ushort SpriteScale { get; private set; }
         public int[] AreaLikeTypes { get; private set; }
@@ -22,12 +22,12 @@ namespace MomenTFS.MAP.Settings
             CameraOrigin = stream.ReadIVector3();
             CameraTranslation = stream.ReadIVector3();
 
-            Lights = new List<Light>();
+            Lights = new Light[3];
             for (int i = 0; i < 3; ++i) {
                 var lightPosition = stream.ReadIVector3();
                 var lightColor = stream.ReadIVector3();
 
-                Lights.Add(new Light(lightPosition, lightColor));
+                Lights[i] = new Light(lightPosition, lightColor);
             }
 
             stream.Seek(12, SeekOrigin.Current);

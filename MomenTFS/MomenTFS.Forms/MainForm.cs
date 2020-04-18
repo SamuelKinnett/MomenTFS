@@ -29,14 +29,6 @@ namespace MomenTFS.Forms
             mapReader = new MAPReader();
             files = new List<TFSFile>();
 
-            var paletteDropdown = new DropDown {
-                Visible = false,
-            };
-            var paletteDropdownLabel = new Label {
-                Visible = false,
-                Text = "Palette"
-            };
-
             var imageView = new ImageView();
             var scrollable = new Scrollable {
                 Content = imageView,
@@ -44,29 +36,48 @@ namespace MomenTFS.Forms
                 ExpandContentHeight = false
             };
 
-            fileList = new ListBox() {
-                Width = 200
+            var paletteDropdown = new DropDown {
+                Visible = false,
+            };
+            var paletteDropdownLabel = new Label {
+                Visible = false,
+                Text = "Palette",
             };
 
-            var aboutDialog = new AboutDialog() {
-                Developers = new string[1] { "Samuel Kinnett" },
-                ProgramName = "MomenTFS",
-                Version = "",
-                ProgramDescription = "A TFS viewer based on and inspired by TFSViewer by Lab 313",
-                License = License.LicenseString
-            };
-
-            scrollable.Content = imageView;
             paletteDropdown.SelectedIndexChanged
                 += (sender, e) => RenderTFS(paletteDropdown, imageView);
 
-
+            var tabControl = new TabControl();
+            var previewLayout = new DynamicLayout();
             var toolbar = new DynamicLayout();
+
+            var toolbarImageInfoLabel = new Label();
             toolbar.AddRow(
-                new Label { Text = "Preview" },
+                toolbarImageInfoLabel,
                 null,
                 paletteDropdownLabel,
                 paletteDropdown);
+
+            previewLayout.BeginVertical();
+            previewLayout.AddRow(toolbar);
+            previewLayout.AddRow(scrollable);
+            previewLayout.EndVertical();
+
+            var previewPage = new TabPage { Text = "Preview" };
+            previewPage.Content = previewLayout;
+            tabControl.Pages.Add(previewPage);
+
+            var mapDetailsText = new TextArea { ReadOnly = true };
+            var mapDetailsPage = new TabPage { Text = "Details" };
+            mapDetailsPage.Content = mapDetailsText;
+            tabControl.Pages.Add(mapDetailsPage);
+
+            var timDataPage = new TabPage { Text = "TIM Data" };
+            tabControl.Pages.Add(timDataPage);
+
+            fileList = new ListBox() {
+                Width = 200
+            };
 
             var layout = new DynamicLayout();
             layout.BeginVertical();
@@ -76,17 +87,28 @@ namespace MomenTFS.Forms
             layout.AddRow(fileList);
             layout.EndVertical();
             layout.BeginVertical();
-            layout.AddRow(toolbar);
-            layout.AddRow(scrollable);
+            layout.AddRow(tabControl);
             layout.EndVertical();
             layout.EndHorizontal();
             layout.EndVertical();
 
             Content = layout;
 
+            var aboutDialog = new AboutDialog() {
+                Developers = new string[1] { "Samuel Kinnett" },
+                ProgramName = "MomenTFS",
+                Version = "",
+                ProgramDescription
+                = "A TFS viewer based on and inspired by TFSViewer by Lab 313.\n\n" +
+                "Huge thanks to Romsstar and SydMontague for their work in reverse engineering " +
+                "the TFS and MAP file formats!",
+                License = License.LicenseString
+            };
+
             var quitCommand = new Command {
                 MenuText = "Quit",
-                Shortcut = Application.Instance.CommonModifier | Keys.Q };
+                Shortcut = Application.Instance.CommonModifier | Keys.Q
+            };
             quitCommand.Executed += (sender, e) => Application.Instance.Quit();
 
             var aboutCommand = new Command { MenuText = "About..." };
@@ -103,15 +125,23 @@ namespace MomenTFS.Forms
             var unloadISO = new Command {
                 MenuText = "Unload ISO",
                 ToolBarText = "Unload ISO",
-                Enabled = false };
+                Enabled = false
+            };
 
             loadISO.Executed += (sender, e) => OpenISO(this, loadISO, unloadISO);
             unloadISO.Executed += (sender, e) => CloseISO(loadISO, unloadISO);
 
-            fileList.SelectedIndexChanged += (sender, e) => OpenSelectedTFS(
-                saveImage, paletteDropdown, paletteDropdownLabel, imageView);
-            fileList.KeyDown += (sender, e) => { 
-                if (e.Key == Keys.Delete || e.Key == Keys.Backspace) { RemoveTFS(); } 
+            fileList.SelectedIndexChanged += (sender, e)
+                => OpenSelectedTFS(
+                    saveImage,
+                    paletteDropdown,
+                    paletteDropdownLabel,
+                    toolbarImageInfoLabel,
+                    imageView,
+                    mapDetailsText,
+                    timDataPage);
+            fileList.KeyDown += (sender, e) => {
+                if (e.Key == Keys.Delete || e.Key == Keys.Backspace) { RemoveTFS(); }
             };
 
             fileList.DataStore = files;
@@ -231,7 +261,10 @@ namespace MomenTFS.Forms
                 Command saveImage,
                 DropDown paletteDropdown,
                 Label paletteDropdownLabel,
-                ImageView imageView) {
+                Label toolbarImageInfoLabel,
+                ImageView imageView,
+                TextArea mapDetailsText,
+                TabPage timDataPage) {
 
             if (fileList.SelectedKey == null) {
                 imageView.Image = null;
@@ -243,6 +276,9 @@ namespace MomenTFS.Forms
             paletteDropdown.Items.Clear();
             paletteDropdownLabel.Visible = false;
             saveImage.Enabled = false;
+            toolbarImageInfoLabel.Text = "";
+            mapDetailsText.Text = "";
+            timDataPage.Content = null;
 
             TFSFile selectedItem = files[fileList.SelectedIndex];
             if (selectedItem.DiscFile == null) {
@@ -254,16 +290,37 @@ namespace MomenTFS.Forms
                 }
             }
 
+            MAPData mapData = null;
+
             if (selectedItem.MAPFilename != null) {
                 if (selectedItem.DiscFile == null) {
-                    mapReader.Read(selectedItem.MAPFilename);
+                    mapData = mapReader.Read(selectedItem.MAPFilename);
                 } else {
                     using (Stream fileStream
                             = cdReader.OpenFile(selectedItem.MAPFilename, FileMode.Open)) {
-                        mapReader.Read(fileStream);
+                        mapData = mapReader.Read(fileStream);
                     }
                 }
+
+                if (mapData != null) {
+                    mapDetailsText.Text = getDetailsText(mapData);
+                    var timDataTabControl = new TabControl();
+                    for (var i = 0; i < mapData.TIMImages.Count; ++i) {
+                        var timImageView = new ImageView();
+                        using (var systemBitmap = mapData.TIMImages[i].ToBitmap(0)) {
+                            timImageView.Image = systemBitmap.ToEtoBitmap();
+                        }
+                        var tabPage = new TabPage { Text = $"Image {i + 1}" };
+                        tabPage.Content = timImageView;
+                        timDataTabControl.Pages.Add(tabPage);
+                    }
+
+                    timDataPage.Content = timDataTabControl;
+                }
             }
+
+            toolbarImageInfoLabel.Text
+                = $"{tfsReader.ImageSize.X} x {tfsReader.ImageSize.Y} pixels";
 
             using (var systemBitmap = tfsReader.RenderImage(0)) {
                 imageView.Image = systemBitmap.ToEtoBitmap();
@@ -336,6 +393,33 @@ namespace MomenTFS.Forms
                     imageView.Image = systemBitmap.ToEtoBitmap();
                 }
             }
+        }
+
+        private string getDetailsText(MAPData mapData) {
+            var detailsText = $"Camera Origin: {mapData.Settings.CameraOrigin}\n" +
+                $"Camera Translation: {mapData.Settings.CameraTranslation}\n";
+
+            for (int i = 0; i < 3; ++i) {
+                detailsText += $"Light {i}:\n\t{mapData.Settings.Lights[i]}\n";
+            }
+
+            detailsText += $"Zoom: {mapData.Settings.Zoom}\n" +
+                $"Sprite Scale: {mapData.Settings.SpriteScale}\n" +
+                $"Area Like Types: [{string.Join(", ", mapData.Settings.AreaLikeTypes)}]\n" +
+                $"Area Dislike Types: [{string.Join(", ", mapData.Settings.AreaDislikeTypes)}]\n" +
+                $"Map Tile Width: {mapData.Settings.MapTileWidth}\n" +
+                $"Map Tile Height: {mapData.Settings.MapTileHeight}\n" +
+                $"Map Tiles:\n";
+
+            for (int y = 0; y < mapData.Settings.MapTileHeight; ++y) {
+                detailsText += "\t";
+                for (int x = 0; x < mapData.Settings.MapTileWidth; ++x) {
+                    detailsText += $"[{mapData.Settings.MapTiles[x, y]}]";
+                }
+                detailsText += "\n";
+            }
+
+            return detailsText;
         }
     }
 }
