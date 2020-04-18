@@ -1,8 +1,5 @@
 ﻿using MomenTFS.Extensions;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace MomenTFS.Objects
 {
@@ -23,7 +20,7 @@ namespace MomenTFS.Objects
             RH = (byte)stream.ReadByte();
             PaletteCount = (byte)stream.ReadByte();
             RP = (byte)stream.ReadByte();
-            Resl = stream.ReadShort();
+            Resl = stream.ReadUShort();
         }
     }
 }

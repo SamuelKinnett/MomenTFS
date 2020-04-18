@@ -21,6 +21,13 @@ namespace MomenTFS.Reader
 
         public int PaletteCount { get => paletteInfo.ClutNum; }
         public bool ImageLoaded { get; private set; }
+        public IVector3 ImageSize { get {
+                int bitmapWidth = bitmapData.Keys.Max() + 1;
+                int bitmapHeight = bitmapData[0].Keys.Max() + 1;
+
+                return new IVector3(bitmapWidth, bitmapHeight, 0);
+            }
+        }
 
         private TFSHeader header;
         private PaletteInfo paletteInfo;
@@ -119,7 +126,7 @@ namespace MomenTFS.Reader
             var colorLookupTableData = new List<ushort>();
 
             for (var i = 0; i < paletteInfo.ClutColors * paletteInfo.ClutNum; ++i) {
-                var currentColorWord = stream.ReadShort();
+                var currentColorWord = stream.ReadUShort();
                 colorLookupTableData.Add(currentColorWord);
             }
 
@@ -127,8 +134,8 @@ namespace MomenTFS.Reader
 
             for (var tileIndex = 0; tileIndex < (header.Width * header.Height); ++tileIndex) {
                 var tileData = new List<byte>();
-                int tileX = stream.ReadShort() * 2;
-                int tileY = stream.ReadShort();
+                int tileX = stream.ReadUShort() * 2;
+                int tileY = stream.ReadUShort();
 
                 if (tileX + TILE_WIDTH > MAX_WIDTH) {
                     tileX = MAX_WIDTH - TILE_WIDTH;
