@@ -3,8 +3,8 @@
 A C#/Eto application for viewing and exporting Digimon World [TFS map files](https://github.com/SamuelKinnett/MomenTFS/wiki/TFS-Files).
 
 ## Screenshots
-![Screenshot1](https://github.com/SamuelKinnett/MomenTFS/blob/master/Assets/Screenshots/Screenshot1.png?raw=true)  
-![Screenshot2](https://github.com/SamuelKinnett/MomenTFS/blob/master/Assets/Screenshots/Screenshot2.png?raw=true)
+![Screenshot3](https://github.com/SamuelKinnett/MomenTFS/blob/master/Assets/Screenshots/Screenshot3.png?raw=true)  
+![Screenshot4](https://github.com/SamuelKinnett/MomenTFS/blob/master/Assets/Screenshots/Screenshot4.png?raw=true)
 
 ## Features
 - View TFS files and switch between palettes
