@@ -1,10 +1,8 @@
 ﻿using MomenTFS.MAP.Elements;
 using MomenTFS.MAP.Objects;
 using MomenTFS.MAP.Settings;
-using MomenTFS.MAP.TIM;
-using System;
+using MomenTFS.TIM;
 using System.Collections.Generic;
-using System.Text;
 
 namespace MomenTFS.MAP
 {

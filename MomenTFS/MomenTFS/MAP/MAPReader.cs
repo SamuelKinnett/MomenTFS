@@ -1,7 +1,7 @@
 ﻿using MomenTFS.MAP.Elements;
 using MomenTFS.MAP.Objects;
 using MomenTFS.MAP.Settings;
-using MomenTFS.MAP.TIM;
+using MomenTFS.TIM;
 using System.Collections.Generic;
 using System.IO;
 

@@ -1,7 +1,7 @@
 using System;
 using Eto.Forms;
 using Eto.Drawing;
-using MomenTFS.Reader;
+using MomenTFS.TFS;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
@@ -10,14 +10,15 @@ using DiscUtils;
 using MomenTFS.UI;
 using MomenTFS.Forms.Extensions;
 using MomenTFS.MAP;
+using System.Collections.ObjectModel;
 
 namespace MomenTFS.Forms
 {
     public partial class MainForm : Form
     {
-        private TFSReader tfsReader;
-        private MAPReader mapReader;
-        private List<TFSFile> files;
+        private RoomReader roomReader;
+        private RoomData roomData;
+        private ObservableCollection<TFSFile> files;
         private Stream isoFileStream;
         private CDReader cdReader;
         private ListBox fileList;
@@ -25,9 +26,13 @@ namespace MomenTFS.Forms
         public MainForm() {
             Title = "MomenTFS";
             ClientSize = new Size(600, 480);
-            tfsReader = new TFSReader();
-            mapReader = new MAPReader();
-            files = new List<TFSFile>();
+            roomReader = new RoomReader();
+
+            files = new ObservableCollection<TFSFile>();
+            files.CollectionChanged += (sender, e) => {
+                fileList.DataStore = files;
+                fileList.UpdateBindings();
+            };
 
             var imageView = new ImageView();
             var scrollable = new Scrollable {
@@ -196,9 +201,6 @@ namespace MomenTFS.Forms
                     files.Add(newFile);
                 }
             }
-
-            fileList.DataStore = files;
-            fileList.UpdateBindings();
         }
 
         private void OpenISO(Control control, Command loadISO, Command closeISO) {
@@ -218,28 +220,36 @@ namespace MomenTFS.Forms
                 closeISO.Enabled = true;
                 var tfsFiles = ScanDiscDirectory(cdReader.Root);
                 foreach (string tfsFilename in tfsFiles) {
-                    files.Add(new TFSFile(tfsFilename, filename));
+                    TFSFile newTFSFile = new TFSFile(tfsFilename, filename);
+                    var directoryPath = Path.GetDirectoryName(tfsFilename);
+                    var newMAPFile = Path.Combine(
+                        directoryPath, $"{Path.GetFileNameWithoutExtension(tfsFilename)}.MAP;1");
+
+                    if (File.Exists(newMAPFile)) {
+                        newTFSFile.MAPFilename = newMAPFile;
+                    }
+
+                    files.Add(newTFSFile);
                 }
             }
-
-            fileList.DataStore = files;
-            fileList.UpdateBindings();
         }
 
         private void CloseISO(Command loadISO, Command closeISO) {
             cdReader.Dispose();
             isoFileStream.Dispose();
 
-            files.RemoveAll((file) => file.DiscFile != null);
-            fileList.DataStore = files;
-            fileList.UpdateBindings();
+            var filesToRemove = files.Where((file) => file.DiscFile != null);
+
+            foreach (var file in filesToRemove) {
+                files.Remove(file);
+            }
 
             closeISO.Enabled = false;
             loadISO.Enabled = true;
         }
 
-        private List<String> ScanDiscDirectory(DiscDirectoryInfo directory) {
-            List<String> tfsFiles = new List<string>();
+        private List<string> ScanDiscDirectory(DiscDirectoryInfo directory) {
+            List<string> tfsFiles = new List<string>();
 
             var files = directory.GetFiles();
             var subDirectories = directory.GetDirectories();
@@ -282,53 +292,50 @@ namespace MomenTFS.Forms
 
             TFSFile selectedItem = files[fileList.SelectedIndex];
             if (selectedItem.DiscFile == null) {
-                tfsReader.Read(selectedItem.Filename);
+                roomData = selectedItem.MAPFilename == null
+                    ? roomReader.ReadRoomDataTFSOnly(selectedItem.Filename)
+                    : roomReader.ReadRoomData(selectedItem.Filename, selectedItem.MAPFilename);
             } else {
                 using (Stream fileStream
                         = cdReader.OpenFile(selectedItem.Filename, FileMode.Open)) {
-                    tfsReader.Read(fileStream);
+                    if (selectedItem.MAPFilename == null) {
+                        roomData = roomReader.ReadRoomDataTFSOnly(fileStream);
+                    } else {
+                        using (Stream mapFileStream
+                                = cdReader.OpenFile(selectedItem.MAPFilename, FileMode.Open)) {
+                            roomData = roomReader.ReadRoomData(fileStream, mapFileStream);
+                        }
+                    }
                 }
             }
 
-            MAPData mapData = null;
 
-            if (selectedItem.MAPFilename != null) {
-                if (selectedItem.DiscFile == null) {
-                    mapData = mapReader.Read(selectedItem.MAPFilename);
-                } else {
-                    using (Stream fileStream
-                            = cdReader.OpenFile(selectedItem.MAPFilename, FileMode.Open)) {
-                        mapData = mapReader.Read(fileStream);
+            if (roomData.MAPData != null) {
+                mapDetailsText.Text = getDetailsText(roomData.MAPData);
+                var timDataTabControl = new TabControl();
+                for (var i = 0; i < roomData.MAPData.TIMImages.Count; ++i) {
+                    var timImageView = new ImageView();
+                    using (var systemBitmap = roomData.MAPData.TIMImages[i].ToBitmap(0)) {
+                        timImageView.Image = systemBitmap.ToEtoBitmap();
                     }
+                    var tabPage = new TabPage { Text = $"Image {i + 1}" };
+                    tabPage.Content = timImageView;
+                    timDataTabControl.Pages.Add(tabPage);
                 }
 
-                if (mapData != null) {
-                    mapDetailsText.Text = getDetailsText(mapData);
-                    var timDataTabControl = new TabControl();
-                    for (var i = 0; i < mapData.TIMImages.Count; ++i) {
-                        var timImageView = new ImageView();
-                        using (var systemBitmap = mapData.TIMImages[i].ToBitmap(0)) {
-                            timImageView.Image = systemBitmap.ToEtoBitmap();
-                        }
-                        var tabPage = new TabPage { Text = $"Image {i + 1}" };
-                        tabPage.Content = timImageView;
-                        timDataTabControl.Pages.Add(tabPage);
-                    }
-
-                    timDataPage.Content = timDataTabControl;
-                }
+                timDataPage.Content = timDataTabControl;
             }
 
             toolbarImageInfoLabel.Text
-                = $"{tfsReader.ImageSize.X} x {tfsReader.ImageSize.Y} pixels";
+                = $"{roomData.TFSData.ImageSize.X} x {roomData.TFSData.ImageSize.Y} pixels";
 
-            using (var systemBitmap = tfsReader.RenderImage(0)) {
+            using (var systemBitmap = roomData.TFSData.ToBitmap(0)) {
                 imageView.Image = systemBitmap.ToEtoBitmap();
             }
 
-            if (tfsReader.PaletteCount > 1) {
+            if (roomData.TFSData.PaletteCount > 1) {
                 List<string> options = Enumerable
-                    .Range(0, tfsReader.PaletteCount)
+                    .Range(0, roomData.TFSData.PaletteCount)
                     .Select(i => i.ToString())
                     .ToList();
 
@@ -348,7 +355,6 @@ namespace MomenTFS.Forms
             if (fileList.SelectedIndex > -1) {
                 int currentIndex = fileList.SelectedIndex;
                 files.RemoveAt(currentIndex);
-                fileList.DataStore = files;
                 if (currentIndex < files.Count) {
                     fileList.SelectedIndex = currentIndex;
                 } else if (currentIndex > 0) {
@@ -369,7 +375,7 @@ namespace MomenTFS.Forms
             if (!string.IsNullOrEmpty(saveFileDialog.FileName)) {
                 Bitmap bitmapToSave;
                 using (var systemBitmap
-                        = tfsReader.RenderImage(int.Parse(paletteDropdown.SelectedKey))) {
+                        = roomData.TFSData.ToBitmap(int.Parse(paletteDropdown.SelectedKey))) {
                     bitmapToSave = systemBitmap.ToEtoBitmap();
                 }
                 switch (saveFileDialog.CurrentFilter.Name) {
@@ -389,7 +395,7 @@ namespace MomenTFS.Forms
         private void RenderTFS(DropDown paletteDropdown, ImageView imageView) {
             if (paletteDropdown.Visible) {
                 using (var systemBitmap
-                        = tfsReader.RenderImage(int.Parse(paletteDropdown.SelectedKey))) {
+                        = roomData.TFSData.ToBitmap(int.Parse(paletteDropdown.SelectedKey))) {
                     imageView.Image = systemBitmap.ToEtoBitmap();
                 }
             }

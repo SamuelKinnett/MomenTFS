@@ -1,14 +1,13 @@
 ﻿using MomenTFS.Extensions;
 using MomenTFS.MAP.Enums;
-using MomenTFS.MAP.TIM.DataEntry;
+using MomenTFS.TIM.DataEntry;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Text;
 
-namespace MomenTFS.MAP.TIM
+namespace MomenTFS.TIM
 {
     public class TIMImage
     {
