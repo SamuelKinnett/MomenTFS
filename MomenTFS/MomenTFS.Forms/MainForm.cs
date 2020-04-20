@@ -1,16 +1,15 @@
-using System;
 using Eto.Forms;
 using Eto.Drawing;
-using MomenTFS.TFS;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using DiscUtils.Iso9660;
 using DiscUtils;
 using MomenTFS.UI;
-using MomenTFS.Forms.Extensions;
 using MomenTFS.MAP;
 using System.Collections.ObjectModel;
+using System;
+using MomenTFS.Objects;
 
 namespace MomenTFS.Forms
 {
@@ -309,15 +308,15 @@ namespace MomenTFS.Forms
                 }
             }
 
-
             if (roomData.MAPData != null) {
                 mapDetailsText.Text = getDetailsText(roomData.MAPData);
                 var timDataTabControl = new TabControl();
                 for (var i = 0; i < roomData.MAPData.TIMImages.Count; ++i) {
                     var timImageView = new ImageView();
-                    using (var systemBitmap = roomData.MAPData.TIMImages[i].ToBitmap(0)) {
-                        timImageView.Image = systemBitmap.ToEtoBitmap();
-                    }
+                    var timBitmap = roomData.MAPData.TIMImages[i].GetBitmapAsFlatArray(0);
+                    timImageView.Image
+                        = getBitmap(roomData.MAPData.TIMImages[i].ImageSize, timBitmap);
+
                     var tabPage = new TabPage { Text = $"Image {i + 1}" };
                     tabPage.Content = timImageView;
                     timDataTabControl.Pages.Add(tabPage);
@@ -329,9 +328,8 @@ namespace MomenTFS.Forms
             toolbarImageInfoLabel.Text
                 = $"{roomData.TFSData.ImageSize.X} x {roomData.TFSData.ImageSize.Y} pixels";
 
-            using (var systemBitmap = roomData.TFSData.ToBitmap(0)) {
-                imageView.Image = systemBitmap.ToEtoBitmap();
-            }
+            var tfsBitmap = roomData.TFSData.GetBitmapAsFlatArray(0);
+            imageView.Image = getBitmap(roomData.TFSData.ImageSize, tfsBitmap);
 
             if (roomData.TFSData.PaletteCount > 1) {
                 List<string> options = Enumerable
@@ -374,10 +372,10 @@ namespace MomenTFS.Forms
 
             if (!string.IsNullOrEmpty(saveFileDialog.FileName)) {
                 Bitmap bitmapToSave;
-                using (var systemBitmap
-                        = roomData.TFSData.ToBitmap(int.Parse(paletteDropdown.SelectedKey))) {
-                    bitmapToSave = systemBitmap.ToEtoBitmap();
-                }
+                var systemBitmap = roomData.TFSData.GetBitmapAsFlatArray(
+                    int.Parse(paletteDropdown.SelectedKey));
+                bitmapToSave = getBitmap(roomData.TFSData.ImageSize, systemBitmap);
+
                 switch (saveFileDialog.CurrentFilter.Name) {
                     case "BMP":
                         bitmapToSave.Save(saveFileDialog.FileName, ImageFormat.Bitmap);
@@ -394,10 +392,9 @@ namespace MomenTFS.Forms
 
         private void RenderTFS(DropDown paletteDropdown, ImageView imageView) {
             if (paletteDropdown.Visible) {
-                using (var systemBitmap
-                        = roomData.TFSData.ToBitmap(int.Parse(paletteDropdown.SelectedKey))) {
-                    imageView.Image = systemBitmap.ToEtoBitmap();
-                }
+                var systemBitmap = roomData.TFSData.GetBitmapAsFlatArray(
+                    int.Parse(paletteDropdown.SelectedKey));
+                imageView.Image = getBitmap(roomData.TFSData.ImageSize, systemBitmap);
             }
         }
 
@@ -426,6 +423,29 @@ namespace MomenTFS.Forms
             }
 
             return detailsText;
+        }
+
+        private Bitmap getBitmap(
+                IVector2 dimensions,
+                System.Drawing.Color[] bitmapData,
+                bool withTransparency = false) {
+            List<Color> convertedBitmapData = Array
+                .ConvertAll(bitmapData, color
+                    => convertSystemColorToEtoColor(color, withTransparency))
+                .ToList();
+
+            return new Bitmap(
+                dimensions.X,
+                dimensions.Y,
+                PixelFormat.Format32bppRgba,
+                convertedBitmapData);
+        }
+
+        private Color convertSystemColorToEtoColor(
+                System.Drawing.Color color, bool withTransparency) {
+            return withTransparency
+                ? new Color(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f)
+                : new Color(color.R / 255f, color.G / 255f, color.B / 255f);
         }
     }
 }

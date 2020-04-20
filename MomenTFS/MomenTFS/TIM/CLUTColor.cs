@@ -38,11 +38,11 @@ namespace MomenTFS.TIM
             rgba[2] = Blue * 8;
             rgba[3] = Red == 0 && Green == 0 && Blue == 0
                 ? SpecialTransparencyProcessing
-                    ? 0
-                    : 255
-                : SpecialTransparencyProcessing
                     ? 255
-                    : 0;
+                    : 0
+                : SpecialTransparencyProcessing
+                    ? 0
+                    : 255;
 
             return rgba;
         }
@@ -51,11 +51,11 @@ namespace MomenTFS.TIM
             return Color.FromArgb(
                 Red == 0 && Green == 0 && Blue == 0
                     ? SpecialTransparencyProcessing
-                        ? 0
-                        : 255
-                    : SpecialTransparencyProcessing
                         ? 255
-                        : 0,
+                        : 0
+                    : SpecialTransparencyProcessing
+                        ? 0
+                        : 255,
                 Red * 8,
                 Green * 8,
                 Blue * 8);
