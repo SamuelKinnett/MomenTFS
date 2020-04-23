@@ -1,4 +1,5 @@
-﻿using MomenTFS.MAP.Elements;
+﻿using MomenTFS.MAP.Collision;
+using MomenTFS.MAP.Elements;
 using MomenTFS.MAP.Objects;
 using MomenTFS.MAP.Settings;
 using MomenTFS.TIM;
@@ -33,6 +34,7 @@ namespace MomenTFS.MAP
             mapData.TIMImages = timImages;
             mapData.Objects = new MAPObjects(stream);
             mapData.Elements = new MAPElements(stream);
+            mapData.Collision = new CollisionData(stream);
 
             return mapData;
         }

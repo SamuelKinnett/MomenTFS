@@ -1,4 +1,6 @@
-﻿using MomenTFS.MAP.Elements;
+﻿using MomenTFS.MAP.Collision;
+using MomenTFS.MAP.Elements;
+using MomenTFS.MAP.Enums;
 using MomenTFS.MAP.Objects;
 using MomenTFS.MAP.Settings;
 using MomenTFS.TIM;
@@ -12,5 +14,6 @@ namespace MomenTFS.MAP
         public List<TIMImage> TIMImages { get; set; }
         public MAPObjects Objects { get; set; }
         public MAPElements Elements { get; set; }
+        public CollisionData Collision { get; set; }
     }
 }

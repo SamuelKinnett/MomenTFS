@@ -1,4 +1,4 @@
-﻿namespace MomenTFS.MAP.Enums
+﻿namespace MomenTFS.MAP.Collision
 {
     public enum CollisionType
     {
