@@ -10,6 +10,7 @@ using MomenTFS.MAP;
 using System.Collections.ObjectModel;
 using System;
 using MomenTFS.Objects;
+using MomenTFS.MAP.Collision;
 
 namespace MomenTFS.Forms
 {
@@ -79,6 +80,15 @@ namespace MomenTFS.Forms
             var timDataPage = new TabPage { Text = "TIM Data" };
             tabControl.Pages.Add(timDataPage);
 
+            var collisionImageView = new ImageView();
+            var collisionMapPage = new TabPage { Text = "Collision Map" };
+            collisionMapPage.Content = new Scrollable {
+                Content = collisionImageView,
+                ExpandContentWidth = false,
+                ExpandContentHeight = false
+            };
+            tabControl.Pages.Add(collisionMapPage);
+
             fileList = new ListBox() {
                 Width = 200
             };
@@ -142,6 +152,7 @@ namespace MomenTFS.Forms
                     paletteDropdownLabel,
                     toolbarImageInfoLabel,
                     imageView,
+                    collisionImageView,
                     mapDetailsText,
                     timDataPage);
             fileList.KeyDown += (sender, e) => {
@@ -272,6 +283,7 @@ namespace MomenTFS.Forms
                 Label paletteDropdownLabel,
                 Label toolbarImageInfoLabel,
                 ImageView imageView,
+                ImageView collisionMapImageView,
                 TextArea mapDetailsText,
                 TabPage timDataPage) {
 
@@ -323,6 +335,50 @@ namespace MomenTFS.Forms
                 }
 
                 timDataPage.Content = timDataTabControl;
+
+                List<Color> bitmapData = new List<Color>();
+                var collisionMapWidth = roomData.MAPData.Collision.CollisionMap.GetLength(0);
+                var collisionMapHeight = roomData.MAPData.Collision.CollisionMap.GetLength(1);
+                for (int y = 0; y < collisionMapHeight; ++y) {
+                    for (int x = 0; x < collisionMapWidth; ++x) {
+                        CollisionType collisionType
+                            = roomData.MAPData.Collision.CollisionMap[x, y];
+
+                        switch (collisionType) {
+                            case CollisionType.SOLID:
+                                bitmapData.Add(Color.FromArgb(29, 31, 33));
+                                break;
+                            case CollisionType.EMPTY:
+                                bitmapData.Add(Color.FromArgb(197, 200, 198));
+                                break;
+                            case CollisionType.EXIT_1:
+                            case CollisionType.EXIT_2:
+                            case CollisionType.EXIT_3:
+                            case CollisionType.EXIT_4:
+                            case CollisionType.EXIT_5:
+                            case CollisionType.EXIT_6:
+                            case CollisionType.EXIT_7:
+                            case CollisionType.EXIT_8:
+                            case CollisionType.EXIT_9:
+                            case CollisionType.EXIT_10:
+                                bitmapData.Add(Color.FromArgb(181, 189, 104));
+                                break;
+                            case CollisionType.TOILET:
+                                bitmapData.Add(Color.FromArgb(129, 162, 190));
+                                break;
+                            default:
+                                bitmapData.Add(Color.FromArgb(133, 103, 143));
+                                break;
+                        }
+                    }
+                }
+
+                collisionMapImageView.Image
+                    = new Bitmap(
+                        collisionMapWidth,
+                        collisionMapHeight,
+                        PixelFormat.Format32bppRgba,
+                        bitmapData);
             }
 
             toolbarImageInfoLabel.Text
