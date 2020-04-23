@@ -1,7 +1,7 @@
 ﻿using MomenTFS.Extensions;
 using System.IO;
 
-namespace MomenTFS.Objects
+namespace MomenTFS.TFS.Objects
 {
     public class TFSHeader
     {

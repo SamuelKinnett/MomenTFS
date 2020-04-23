@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MomenTFS.MAP.TIM
+namespace MomenTFS.TIM
 {
     public class CLUT
     {

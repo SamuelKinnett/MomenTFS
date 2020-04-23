@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace MomenTFS.MAP.TIM.DataEntry
+﻿namespace MomenTFS.TIM.DataEntry
 {
     public class IndexedColourDataEntry : ImageDataEntry
     {

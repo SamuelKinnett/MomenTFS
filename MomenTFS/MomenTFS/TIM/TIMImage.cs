@@ -1,14 +1,13 @@
 ﻿using MomenTFS.Extensions;
 using MomenTFS.MAP.Enums;
-using MomenTFS.MAP.TIM.DataEntry;
+using MomenTFS.Objects;
+using MomenTFS.TIM.DataEntry;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Text;
 
-namespace MomenTFS.MAP.TIM
+namespace MomenTFS.TIM
 {
     public class TIMImage
     {
@@ -22,6 +21,12 @@ namespace MomenTFS.MAP.TIM
         public ushort ImageWidth { get; private set; }
         public ushort ImageHeight { get; private set; }
         public ImageDataEntry[,] ImageData { get; private set; }
+
+        public IVector2 ImageSize {
+            get {
+                return new IVector2(ImageData.GetLength(0), ImageData.GetLength(1));
+            }
+        }
 
         public TIMImage(Stream stream) {
             byte tag = (byte)stream.ReadByte();
@@ -107,62 +112,56 @@ namespace MomenTFS.MAP.TIM
             }
         }
 
-        public Bitmap ToBitmap(int paletteIndex) {
-            int bitmapWidth = ImageWidth;
-            int bitmapHeight = ImageHeight;
+        public Color[,] GetBitmap(int paletteIndex = 0) {
+            int bitmapWidth = ImageData.GetLength(0);
+            int bitmapHeight = ImageData.GetLength(1);
 
-            switch (BitsPerPixel) {
-                case BitsPerPixel.FOUR:
-                    bitmapWidth = ImageWidth * 4;
-                    break;
-                case BitsPerPixel.EIGHT:
-                    bitmapWidth = ImageWidth * 2;
-                    break;
-                case BitsPerPixel.TWENTY_FOUR:
-                    bitmapWidth = (int)Math.Ceiling(ImageWidth / 3f);
-                    break;
-            }
+            var bitmap = new Color[bitmapWidth, bitmapHeight];
 
-            Bitmap renderedBitmap
-                = new Bitmap(bitmapWidth, bitmapHeight, PixelFormat.Format32bppRgb);
+            for (var y = 0; y < bitmapHeight; ++y) {
+                for (var x = 0; x < bitmapWidth; ++x) {
+                    Color pixelColor;
+                    ImageDataEntry currentDataEntry = ImageData[x, y];
 
-            try {
-                var renderedBitmapData = renderedBitmap.LockBits(
-                    new Rectangle(0, 0, bitmapWidth, bitmapHeight),
-                    ImageLockMode.ReadWrite,
-                    PixelFormat.Format32bppRgb);
-                var stride = renderedBitmapData.Stride;
-
-                unsafe {
-                    byte* bitmapPointer = (byte*)renderedBitmapData.Scan0;
-
-                    for (var y = 0; y < bitmapHeight; ++y) {
-                        for (var x = 0; x < bitmapWidth; ++x) {
-                            Color pixelColor;
-                            ImageDataEntry currentDataEntry = ImageData[x, y];
-
-                            if (currentDataEntry is IndexedColourDataEntry) {
-                                pixelColor = ColourLookupTable.LookupTable
-                                    [((IndexedColourDataEntry)currentDataEntry).CLUTIndex, 0]
-                                    .GetAsSystemColor();
-                            } else if (currentDataEntry is RealColourDataEntry) {
-                                pixelColor = ((RealColourDataEntry)currentDataEntry).Color;
-                            }
-
-                            bitmapPointer[(x * 4) + (y * stride)] = pixelColor.B;
-                            bitmapPointer[(x * 4) + (y * stride) + 1] = pixelColor.G;
-                            bitmapPointer[(x * 4) + (y * stride) + 2] = pixelColor.R;
-                            bitmapPointer[(x * 4) + (y * stride) + 3] = pixelColor.A;
-                        }
+                    if (currentDataEntry is IndexedColourDataEntry) {
+                        pixelColor = ColourLookupTable.LookupTable
+                            [((IndexedColourDataEntry)currentDataEntry).CLUTIndex, paletteIndex]
+                            .GetAsSystemColor();
+                    } else if (currentDataEntry is RealColourDataEntry) {
+                        pixelColor = ((RealColourDataEntry)currentDataEntry).Color;
                     }
+
+                    bitmap[x, y] = pixelColor;
                 }
-
-                renderedBitmap.UnlockBits(renderedBitmapData);
-            } catch (Exception ex) {
-
             }
 
-            return renderedBitmap;
+            return bitmap;
+        }
+
+        public Color[] GetBitmapAsFlatArray(int paletteIndex) {
+            int bitmapWidth = ImageData.GetLength(0);
+            int bitmapHeight = ImageData.GetLength(1);
+
+            var bitmap = new Color[bitmapWidth * bitmapHeight];
+
+            for (var y = 0; y < bitmapHeight; ++y) {
+                for (var x = 0; x < bitmapWidth; ++x) {
+                    Color pixelColor;
+                    ImageDataEntry currentDataEntry = ImageData[x, y];
+
+                    if (currentDataEntry is IndexedColourDataEntry) {
+                        pixelColor = ColourLookupTable.LookupTable
+                            [((IndexedColourDataEntry)currentDataEntry).CLUTIndex, paletteIndex]
+                            .GetAsSystemColor();
+                    } else if (currentDataEntry is RealColourDataEntry) {
+                        pixelColor = ((RealColourDataEntry)currentDataEntry).Color;
+                    }
+
+                    bitmap[y * bitmapWidth + x] = pixelColor;
+                }
+            }
+
+            return bitmap;
         }
     }
 }

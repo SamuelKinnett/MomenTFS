@@ -1,4 +1,4 @@
-﻿namespace MomenTFS.Objects
+﻿namespace MomenTFS.TFS.Objects
 {
     public class TFSColor {
         public byte Red {get;set;}
