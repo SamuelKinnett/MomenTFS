@@ -71,7 +71,7 @@ namespace MomenTFS.MAP.Elements
             }
 
             FleePosition = stream.ReadSVector3();
-            AISectionPositionCount = stream.ReadShort();
+            AISectionPositionCount = Math.Max(stream.ReadShort(), (short)0);
             AISections = new short[8];
 
             for (int i = 0; i < 8; ++i) {

@@ -1,4 +1,5 @@
 ﻿using MomenTFS.Extensions;
+using MomenTFS.MAP.Collision;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -54,7 +55,15 @@ namespace MomenTFS.MAP.Elements
                 WarpTargetPoints[i] = stream.ReadShort();
             }
 
-            NumberOfDigimon = stream.ReadShort();
+            NumberOfDigimon = Math.Max(stream.ReadShort(), (short)0);
+            if (NumberOfDigimon > 8) {
+                stream.Seek(
+                        -(CollisionData.COLLISION_MAP_GRID_SIZE
+                        * CollisionData.COLLISION_MAP_GRID_SIZE),
+                    SeekOrigin.End);
+                NumberOfDigimon = 0;
+            }
+
             Digimon = new MAPDigimon[NumberOfDigimon];
 
             for (int i = 0; i < NumberOfDigimon; ++i) {

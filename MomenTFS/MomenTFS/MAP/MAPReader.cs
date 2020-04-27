@@ -32,7 +32,9 @@ namespace MomenTFS.MAP
             }
 
             mapData.TIMImages = timImages;
-            mapData.Objects = new MAPObjects(stream);
+            if (timImages.Count > 0) {
+                mapData.Objects = new MAPObjects(stream);
+            }
             mapData.Elements = new MAPElements(stream);
             mapData.Collision = new CollisionData(stream);
 

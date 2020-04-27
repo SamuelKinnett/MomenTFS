@@ -23,18 +23,20 @@ namespace MomenTFS.Extensions
 
         public static SVector3 ReadSVector3( 
                 this Stream stream, Endian endianness = Endian.BIG) {
-            return new SVector3(
-                stream.ReadShort(endianness),
-                stream.ReadShort(endianness),
-                stream.ReadShort(endianness));
+            short x = stream.ReadShort(endianness);
+            short z = stream.ReadShort(endianness);
+            short y = stream.ReadShort(endianness);
+
+            return new SVector3(x, y, z);
         }
 
         public static IVector3 ReadIVector3(
                 this Stream stream, Endian endianness = Endian.BIG) {
-            return new IVector3(
-                stream.ReadInt(endianness),
-                stream.ReadInt(endianness),
-                stream.ReadInt(endianness));
+            int x = stream.ReadInt(endianness);
+            int z = stream.ReadInt(endianness);
+            int y = stream.ReadInt(endianness);
+
+            return new IVector3(x, y, z);
         }
 
         private static byte[] ReadBytes(this Stream stream, int byteCount, Endian endianness) {

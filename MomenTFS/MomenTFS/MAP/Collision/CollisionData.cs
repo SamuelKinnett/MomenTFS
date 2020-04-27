@@ -4,7 +4,7 @@ namespace MomenTFS.MAP.Collision
 {
     public class CollisionData
     {
-        private const int COLLISION_MAP_GRID_SIZE = 100;
+        public static int COLLISION_MAP_GRID_SIZE = 100;
 
         public CollisionType[,] CollisionMap { get; set; }
 
