@@ -22,6 +22,8 @@ namespace MomenTFS.Forms
         private Stream isoFileStream;
         private CDReader cdReader;
         private ListBox fileList;
+        private TabPage timDataPage;
+        private MAPObjectsPage mapObjectsPage;
 
         public MainForm() {
             Title = "MomenTFS";
@@ -77,7 +79,7 @@ namespace MomenTFS.Forms
             mapDetailsPage.Content = mapDetailsText;
             tabControl.Pages.Add(mapDetailsPage);
 
-            var timDataPage = new TabPage { Text = "TIM Data" };
+            timDataPage = new TabPage { Text = "TIM Data" };
             tabControl.Pages.Add(timDataPage);
 
             var collisionImageView = new ImageView();
@@ -88,6 +90,8 @@ namespace MomenTFS.Forms
                 ExpandContentHeight = false
             };
             tabControl.Pages.Add(collisionMapPage);
+
+            mapObjectsPage = new MAPObjectsPage(tabControl);
 
             fileList = new ListBox() {
                 Width = 200
@@ -153,8 +157,7 @@ namespace MomenTFS.Forms
                     toolbarImageInfoLabel,
                     imageView,
                     collisionImageView,
-                    mapDetailsText,
-                    timDataPage);
+                    mapDetailsText);
             fileList.KeyDown += (sender, e) => {
                 if (e.Key == Keys.Delete || e.Key == Keys.Backspace) { RemoveTFS(); }
             };
@@ -284,8 +287,7 @@ namespace MomenTFS.Forms
                 Label toolbarImageInfoLabel,
                 ImageView imageView,
                 ImageView collisionMapImageView,
-                TextArea mapDetailsText,
-                TabPage timDataPage) {
+                TextArea mapDetailsText) {
 
             if (fileList.SelectedKey == null) {
                 imageView.Image = null;
@@ -325,7 +327,7 @@ namespace MomenTFS.Forms
                 var timDataTabControl = new TabControl();
                 for (var i = 0; i < roomData.MAPData.TIMImages.Count; ++i) {
                     var timImageView = new ImageView();
-                    var timBitmap = roomData.MAPData.TIMImages[i].GetBitmapAsFlatArray(0);
+                    var timBitmap = roomData.MAPData.TIMImages[i].GetBitmapAsFlatArray(roomData.TFSData.ColourLookupTable);
                     timImageView.Image
                         = getBitmap(roomData.MAPData.TIMImages[i].ImageSize, timBitmap);
 
@@ -379,6 +381,8 @@ namespace MomenTFS.Forms
                         collisionMapHeight,
                         PixelFormat.Format32bppRgba,
                         bitmapData);
+
+                mapObjectsPage.Update(roomData);
             }
 
             toolbarImageInfoLabel.Text

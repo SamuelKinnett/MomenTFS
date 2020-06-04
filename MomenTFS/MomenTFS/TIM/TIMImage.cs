@@ -14,7 +14,7 @@ namespace MomenTFS.TIM
         public byte Version { get; private set; }
         public BitsPerPixel BitsPerPixel { get; private set; }
         public bool HasCLUT { get; private set; }
-        public CLUT ColourLookupTable { get; private set; }
+        public CLUT ColorLookupTable { get; private set; }
         public int ImageLength { get; private set; }
         public ushort ImageX { get; private set; }
         public ushort ImageY { get; private set; }
@@ -64,7 +64,7 @@ namespace MomenTFS.TIM
                 }
 
                 clut.LookupTable = lookupTable;
-                ColourLookupTable = clut;
+                ColorLookupTable = clut;
             }
 
             ImageLength = stream.ReadInt();
@@ -112,7 +112,11 @@ namespace MomenTFS.TIM
             }
         }
 
-        public Color[,] GetBitmap(int paletteIndex = 0) {
+        public Color[,] GetBitmap() {
+            return GetBitmap(ColorLookupTable);
+        }
+
+        public Color[,] GetBitmap(CLUT colorLookupTable, int paletteIndex = 0) {
             int bitmapWidth = ImageData.GetLength(0);
             int bitmapHeight = ImageData.GetLength(1);
 
@@ -124,7 +128,7 @@ namespace MomenTFS.TIM
                     ImageDataEntry currentDataEntry = ImageData[x, y];
 
                     if (currentDataEntry is IndexedColourDataEntry) {
-                        pixelColor = ColourLookupTable.LookupTable
+                        pixelColor = colorLookupTable.LookupTable
                             [((IndexedColourDataEntry)currentDataEntry).CLUTIndex, paletteIndex]
                             .GetAsSystemColor();
                     } else if (currentDataEntry is RealColourDataEntry) {
@@ -138,7 +142,11 @@ namespace MomenTFS.TIM
             return bitmap;
         }
 
-        public Color[] GetBitmapAsFlatArray(int paletteIndex) {
+        public Color[] GetBitmapAsFlatArray() {
+            return GetBitmapAsFlatArray(ColorLookupTable);
+        }
+
+        public Color[] GetBitmapAsFlatArray(CLUT colorLookupTable, int paletteIndex = 0) {
             int bitmapWidth = ImageData.GetLength(0);
             int bitmapHeight = ImageData.GetLength(1);
 
@@ -150,7 +158,7 @@ namespace MomenTFS.TIM
                     ImageDataEntry currentDataEntry = ImageData[x, y];
 
                     if (currentDataEntry is IndexedColourDataEntry) {
-                        pixelColor = ColourLookupTable.LookupTable
+                        pixelColor = colorLookupTable.LookupTable
                             [((IndexedColourDataEntry)currentDataEntry).CLUTIndex, paletteIndex]
                             .GetAsSystemColor();
                     } else if (currentDataEntry is RealColourDataEntry) {

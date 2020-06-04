@@ -5,21 +5,21 @@ namespace MomenTFS.MAP.Objects
 {
     public class MAPObjectInstance
     {
-        public ushort[] AnimationState { get; private set; }
-        public ushort[] AnimationDuration { get; private set; }
+        public short[] AnimationState { get; private set; }
+        public short[] AnimationDuration { get; private set; }
         public ushort X { get; private set; }
         public ushort Y { get; private set; }
 
         public MAPObjectInstance(Stream stream) {
-            AnimationState = new ushort[8];
-            AnimationDuration = new ushort[8];
+            AnimationState = new short[8];
+            AnimationDuration = new short[8];
             
             for (int i = 0; i < 8; ++i) {
-                AnimationState[i] = stream.ReadUShort();
+                AnimationState[i] = stream.ReadShort();
             }
 
             for (int i = 0; i < 8; ++i) {
-                AnimationDuration[i] = stream.ReadUShort();
+                AnimationDuration[i] = stream.ReadShort();
             }
 
             X = stream.ReadUShort();
