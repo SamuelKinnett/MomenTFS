@@ -54,7 +54,7 @@ namespace MomenTFS.MAP.Elements
                 WarpTargetPoints[i] = stream.ReadShort();
             }
 
-            NumberOfDigimon = stream.ReadShort();
+            NumberOfDigimon = Math.Max((short) 0, stream.ReadShort());
             Digimon = new MAPDigimon[NumberOfDigimon];
 
             for (int i = 0; i < NumberOfDigimon; ++i) {
