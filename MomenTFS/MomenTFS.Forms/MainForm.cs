@@ -12,11 +12,10 @@ using System;
 using MomenTFS.Objects;
 using MomenTFS.MAP.Collision;
 
-namespace MomenTFS.Forms
-{
-    public partial class MainForm : Form
-    {
+namespace MomenTFS.Forms {
+    public partial class MainForm : Form {
         private RoomReader roomReader;
+        private RoomWriter roomWriter;
         private RoomData roomData;
         private ObservableCollection<TFSFile> files;
         private Stream isoFileStream;
@@ -27,6 +26,7 @@ namespace MomenTFS.Forms
             Title = "MomenTFS";
             ClientSize = new Size(600, 480);
             roomReader = new RoomReader();
+            roomWriter = new RoomWriter();
 
             files = new ObservableCollection<TFSFile>();
             files.CollectionChanged += (sender, e) => {
@@ -72,9 +72,7 @@ namespace MomenTFS.Forms
             previewPage.Content = previewLayout;
             tabControl.Pages.Add(previewPage);
 
-            var mapDetailsText = new TextArea { ReadOnly = true };
-            var mapDetailsPage = new TabPage { Text = "Details" };
-            mapDetailsPage.Content = mapDetailsText;
+            var mapDetailsPage = new MapDetailsPage();
             tabControl.Pages.Add(mapDetailsPage);
 
             var timDataPage = new TabPage { Text = "TIM Data" };
@@ -132,6 +130,10 @@ namespace MomenTFS.Forms
             saveImage.Enabled = false;
             saveImage.Executed += (sender, e) => SaveImage(this, paletteDropdown);
 
+            var patchMAP = new Command { MenuText = "Patch MAP file", ToolBarText = "Patch MAP file" };
+            patchMAP.Enabled = false;
+            patchMAP.Executed += (sender, e) => PatchMAP(this, mapDetailsPage);
+
             var loadTFS = new Command { MenuText = "Open TFS", ToolBarText = "Load TFS" };
             loadTFS.Executed += (sender, e) => OpenTFS(this);
 
@@ -148,12 +150,13 @@ namespace MomenTFS.Forms
             fileList.SelectedIndexChanged += (sender, e)
                 => OpenSelectedTFS(
                     saveImage,
+                    patchMAP,
                     paletteDropdown,
                     paletteDropdownLabel,
                     toolbarImageInfoLabel,
                     imageView,
                     collisionImageView,
-                    mapDetailsText,
+                    mapDetailsPage,
                     timDataPage);
             fileList.KeyDown += (sender, e) => {
                 if (e.Key == Keys.Delete || e.Key == Keys.Backspace) { RemoveTFS(); }
@@ -170,7 +173,7 @@ namespace MomenTFS.Forms
 					// File submenu
 					new ButtonMenuItem {
                         Text = "&File",
-                        Items = { loadTFS, loadISO, unloadISO, saveImage }
+                        Items = { loadTFS, loadISO, unloadISO, saveImage, patchMAP }
                     }
 					// new ButtonMenuItem { Text = "&Edit", Items = { /* commands/items */ } },
 					// new ButtonMenuItem { Text = "&View", Items = { /* commands/items */ } },
@@ -279,12 +282,13 @@ namespace MomenTFS.Forms
 
         private void OpenSelectedTFS(
                 Command saveImage,
+                Command patchMAP,
                 DropDown paletteDropdown,
                 Label paletteDropdownLabel,
                 Label toolbarImageInfoLabel,
                 ImageView imageView,
                 ImageView collisionMapImageView,
-                TextArea mapDetailsText,
+                MapDetailsPage mapDetailsPage,
                 TabPage timDataPage) {
 
             if (fileList.SelectedKey == null) {
@@ -292,13 +296,13 @@ namespace MomenTFS.Forms
                 return;
             }
 
-            saveImage.Enabled = false;
             paletteDropdown.Visible = false;
             paletteDropdown.Items.Clear();
             paletteDropdownLabel.Visible = false;
             saveImage.Enabled = false;
+            patchMAP.Enabled = false;
             toolbarImageInfoLabel.Text = "";
-            mapDetailsText.Text = "";
+            mapDetailsPage.Details.Text = "";
             timDataPage.Content = null;
 
             TFSFile selectedItem = files[fileList.SelectedIndex];
@@ -321,7 +325,7 @@ namespace MomenTFS.Forms
             }
 
             if (roomData.MAPData != null) {
-                mapDetailsText.Text = getDetailsText(roomData.MAPData);
+                mapDetailsPage.MapData = roomData.MAPData;
                 var timDataTabControl = new TabControl();
                 for (var i = 0; i < roomData.MAPData.TIMImages.Count; ++i) {
                     var timImageView = new ImageView();
@@ -403,6 +407,9 @@ namespace MomenTFS.Forms
             }
 
             saveImage.Enabled = true;
+            if (roomData.MAPData != null) {
+                patchMAP.Enabled = true;
+            }
         }
 
         private void RemoveTFS() {
@@ -446,39 +453,29 @@ namespace MomenTFS.Forms
             }
         }
 
+        private void PatchMAP(Control control, MapDetailsPage mapDetailsPage) {
+            if (fileList.SelectedKey == null) {
+                return;
+            }
+
+            TFSFile selectedItem = files[fileList.SelectedIndex];
+            MAPData dataToPatch = mapDetailsPage.GetDataToPatch();
+            if (roomData.MAPData != null) {
+                roomData.MAPData = dataToPatch;
+                if (selectedItem.DiscFile == null) {
+                    roomWriter.WriteRoomDataMAPOnly(selectedItem.MAPFilename, roomData);
+                } else {
+                    return;
+                }
+            }
+        }
+
         private void RenderTFS(DropDown paletteDropdown, ImageView imageView) {
             if (paletteDropdown.Visible) {
                 var systemBitmap = roomData.TFSData.GetBitmapAsFlatArray(
                     int.Parse(paletteDropdown.SelectedKey));
                 imageView.Image = getBitmap(roomData.TFSData.ImageSize, systemBitmap);
             }
-        }
-
-        private string getDetailsText(MAPData mapData) {
-            var detailsText = $"Camera Origin: {mapData.Settings.CameraOrigin}\n" +
-                $"Camera Translation: {mapData.Settings.CameraTranslation}\n";
-
-            for (int i = 0; i < 3; ++i) {
-                detailsText += $"Light {i}:\n\t{mapData.Settings.Lights[i]}\n";
-            }
-
-            detailsText += $"Zoom: {mapData.Settings.Zoom}\n" +
-                $"Sprite Scale: {mapData.Settings.SpriteScale}\n" +
-                $"Area Like Types: [{string.Join(", ", mapData.Settings.AreaLikeTypes)}]\n" +
-                $"Area Dislike Types: [{string.Join(", ", mapData.Settings.AreaDislikeTypes)}]\n" +
-                $"Map Tile Width: {mapData.Settings.MapTileWidth}\n" +
-                $"Map Tile Height: {mapData.Settings.MapTileHeight}\n" +
-                $"Map Tiles:\n";
-
-            for (int y = 0; y < mapData.Settings.MapTileHeight; ++y) {
-                detailsText += "\t";
-                for (int x = 0; x < mapData.Settings.MapTileWidth; ++x) {
-                    detailsText += $"[{mapData.Settings.MapTiles[x, y]}]";
-                }
-                detailsText += "\n";
-            }
-
-            return detailsText;
         }
 
         private Bitmap getBitmap(

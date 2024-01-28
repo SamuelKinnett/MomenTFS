@@ -8,12 +8,10 @@ using System.Linq;
 
 namespace MomenTFS.TFS
 {
-    public class TFSReader
-    {
-        private const int TILE_WIDTH = 128;
-        private const int TILE_HEIGHT = 128;
+    public class TFSReader : TFSBase {
 
-        public IVector3 ImageSize { get {
+        public IVector3 ImageSize {
+            get {
                 int bitmapWidth = bitmapData.Keys.Max() + 1;
                 int bitmapHeight = bitmapData[0].Keys.Max() + 1;
 

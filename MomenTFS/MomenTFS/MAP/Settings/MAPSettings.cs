@@ -7,16 +7,16 @@ namespace MomenTFS.MAP.Settings
 {
     public class MAPSettings
     {
-        public IVector3 CameraOrigin { get; private set; }
-        public IVector3 CameraTranslation { get; private set; }
-        public Light[] Lights { get; private set; }
-        public ushort Zoom { get; private set; }
-        public ushort SpriteScale { get; private set; }
-        public int[] AreaLikeTypes { get; private set; }
-        public int[] AreaDislikeTypes { get; private set; }
-        public int MapTileWidth { get; private set; }
-        public int MapTileHeight { get; private set; }
-        public int[,] MapTiles { get; private set; }
+        public IVector3 CameraOrigin { get; set; }
+        public IVector3 CameraTranslation { get; set; }
+        public Light[] Lights { get; set; }
+        public ushort Zoom { get; set; }
+        public ushort SpriteScale { get; set; }
+        public int[] AreaLikeTypes { get; set; }
+        public int[] AreaDislikeTypes { get; set; }
+        public int MapTileWidth { get; set; }
+        public int MapTileHeight { get; set; }
+        public int[,] MapTiles { get; set; }
 
         public MAPSettings(Stream stream) {
             CameraOrigin = stream.ReadIVector3();
@@ -54,6 +54,37 @@ namespace MomenTFS.MAP.Settings
             for (int y = 0; y < MapTileHeight; ++y) {
                 for (int x = 0; x < MapTileWidth; ++x) {
                     MapTiles[x, y] = stream.ReadInt();
+                }
+            }
+        }
+
+        public void write(Stream stream) {
+            stream.WriteIVector3(CameraOrigin);
+            stream.WriteIVector3(CameraTranslation);
+            for (int i = 0; i < 3; ++i) {
+                Light light = Lights[i];
+                stream.WriteIVector3(light.Position);
+                stream.WriteIVector3(light.Color);
+            }
+
+            stream.Seek(12, SeekOrigin.Current);
+
+            stream.WriteUShort(Zoom);
+            stream.WriteUShort(SpriteScale);
+
+            for (int i = 0; i < 4; ++i) {
+                stream.WriteInt(AreaLikeTypes[i]);
+            }
+
+            for (int i = 0; i < 4; ++i) {
+                stream.WriteInt(AreaDislikeTypes[i]);
+            }
+
+            stream.WriteInt(MapTileWidth);
+            stream.WriteInt(MapTileHeight);
+            for (int y = 0; y < MapTileHeight; ++y) {
+                for (int x = 0; x < MapTileWidth; ++x) {
+                    stream.WriteInt(MapTiles[x, y]);
                 }
             }
         }
